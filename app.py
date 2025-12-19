@@ -2,59 +2,84 @@ import streamlit as st
 import time
 from datetime import datetime
 
-# 設定網頁
-st.set_page_config(page_title="極簡翻板鐘", layout="centered")
+st.set_page_config(page_title="真實感翻板鐘", layout="centered")
 
-# CSS 樣式：模擬機械翻板外觀
+# CSS 動畫與樣式
 st.markdown("""
-    <style>
-    .clock-container {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        background-color: #1a1a1a;
-        padding: 40px;
-        border-radius: 20px;
-    }
-    .flip-unit {
-        background: linear-gradient(180deg, #333 48%, #111 50%, #333 52%);
-        color: white;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 80px;
-        font-weight: bold;
+<style>
+    .clock { display: flex; gap: 10px; justify-content: center; background: #000; padding: 50px; border-radius: 15px; }
+    
+    /* 每一格數字的容器 */
+    .digit-box {
+        position: relative;
         width: 80px;
         height: 120px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 8px;
-        border: 1px solid #000;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        background-color: #333;
+        border-radius: 6px;
+        overflow: hidden;
     }
-    .colon {
-        font-size: 60px;
-        color: #555;
-        line-height: 120px;
+
+    /* 模擬翻板中間的那條縫 */
+    .digit-box::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(0,0,0,0.6);
+        z-index: 5;
     }
-    </style>
-    """, unsafe_allow_html=True)
 
-st.title("🕰️ 精確版機械翻板鐘")
-st.write("此版本直接由程式繪製，解決圖片裁切位移問題。")
+    /* 使用 sprite 圖片作為背景 */
+    .base-img {
+        position: absolute;
+        width: 500%; /* 因為橫向有 5 個數字 */
+        height: 200%; /* 因為縱向有 2 列 */
+        background-image: url('https://raw.githubusercontent.com/your-username/your-repo/main/digits.png'); 
+        background-size: 500% 200%;
+    }
 
-clock_placeholder = st.empty()
+    /* 翻轉動畫：模擬卡片落下的感覺 */
+    @keyframes flipDown {
+        0% { transform: rotateX(0deg); }
+        100% { transform: rotateX(-180deg); }
+    }
+
+    .animate-flip {
+        animation: flipDown 0.6s ease-in-out;
+        transform-origin: bottom;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def get_css_pos(char):
+    if char == ":": return None
+    n = int(char)
+    # 計算 background-position 百分比
+    x = (n % 5) * 25  # 0, 25, 50, 75, 100
+    y = (n // 5) * 100 # 0, 100
+    return f"{x}% {y}%"
+
+st.title("🕰️ 真實感翻板數字鐘")
+
+placeholder = st.empty()
 
 while True:
-    now = datetime.now().strftime("%H:%M:%S")
+    t = datetime.now().strftime("%H%M%S")
     
-    # 建立時鐘 HTML
-    html_str = '<div class="clock-container">'
-    for char in now:
-        if char == ":":
-            html_str += f'<div class="colon">:</div>'
-        else:
-            html_str += f'<div class="flip-unit">{char}</div>'
-    html_str += '</div>'
+    html = '<div class="clock">'
+    for i, char in enumerate(t):
+        pos = get_css_pos(char)
+        # 建立翻板 HTML 結構
+        html += f'''
+            <div class="digit-box">
+                <div class="base-img" style="background-position: {pos};"></div>
+            </div>
+        '''
+        if i in [1, 3]: # 加入冒號
+            html += '<div style="color:white; font-size:40px; line-height:120px;">:</div>'
+    html += '</div>'
     
-    clock_placeholder.markdown(html_str, unsafe_allow_html=True)
+    placeholder.markdown(html, unsafe_allow_html=True)
     time.sleep(1)
