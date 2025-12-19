@@ -2,82 +2,79 @@ import streamlit as st
 import time
 from datetime import datetime
 
-st.set_page_config(page_title="真實翻板鐘", layout="centered")
+st.set_page_config(page_title="真實翻板時鐘", layout="centered")
 
-# --- 1. 定義精確座標 (基於您的 digits.png) ---
-# 這些數值是根據 5x2 網格微調後的像素偏移量
-digit_map = {
-    '0': '0px 0px',      '1': '-60px 0px',    '2': '-120px 0px',   '3': '-180px 0px',   '4': '-240px 0px',
-    '5': '0px -90px',    '6': '-60px -90px',  '7': '-120px -90px', '8': '-180px -90px', '9': '-240px -90px'
-}
-
-# --- 2. 注入 CSS 樣式 ---
-st.markdown("""
+# CSS 注入：建立 3D 翻板視覺效果
+flip_clock_html = """
 <style>
-    .clock-container {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        align-items: center;
-        background-color: #111;
-        padding: 30px;
-        border-radius: 15px;
-    }
-    .flip-card {
+    body { background-color: #0e1117; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .clock { display: flex; gap: 15px; align-items: center; }
+    
+    .digit-container {
         position: relative;
-        width: 60px;   /* 單個數字寬度 */
-        height: 90px;  /* 單個數字高度 */
-        background-color: #222;
-        border-radius: 4px;
-        overflow: hidden;
-        border: 1px solid #333;
+        width: 80px;
+        height: 120px;
+        background-color: #333;
+        border-radius: 8px;
+        font-family: 'Helvetica', sans-serif;
+        font-size: 80px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        line-height: 120px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     }
-    .digit-sprite {
-        width: 300px;  /* 總寬度 (60*5) */
-        height: 180px; /* 總高度 (90*2) */
-        background-image: url("https://raw.githubusercontent.com/your-username/your-repo/main/digits.png");
-        background-size: 300px 180px;
-        background-repeat: no-repeat;
-        transition: background-position 0.4s ease-in-out;
-    }
-    /* 中間那條真實的縫隙 */
-    .flap-line {
+
+    /* 中間的機械摺痕 */
+    .digit-container::before {
+        content: '';
         position: absolute;
         top: 50%;
         left: 0;
         width: 100%;
-        height: 2px;
-        background: rgba(0,0,0,0.7);
+        height: 3px;
+        background: #000;
         z-index: 10;
-        box-shadow: 0 1px 1px rgba(255,255,255,0.1);
     }
-    .colon { color: #555; font-size: 40px; font-weight: bold; }
+
+    /* 頂部半部陰影 */
+    .digit-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background: rgba(0,0,0,0.1);
+        border-radius: 8px 8px 0 0;
+    }
+
+    .colon { font-size: 60px; color: #555; font-family: sans-serif; }
 </style>
-""", unsafe_allow_html=True)
+
+<div class="clock" id="clock"></div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + 
+                        now.getMinutes().toString().padStart(2, '0') + 
+                        now.getSeconds().toString().padStart(2, '0');
+        
+        let html = '';
+        for (let i = 0; i < timeStr.length; i++) {
+            html += `<div class="digit-container">${timeStr[i]}</div>`;
+            if (i === 1 || i === 3) html += '<div class="colon">:</div>';
+        }
+        document.getElementById('clock').innerHTML = html;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+"""
 
 st.title("🕰️ 真實感翻板數字鐘")
+st.write("採用 CSS 物理渲染，解決圖片偏移與代碼顯示問題")
 
-# 建立顯示容器
-placeholder = st.empty()
-
-while True:
-    t = datetime.now().strftime("%H:%M:%S")
-    
-    # 構建 HTML
-    html = '<div class="clock-container">'
-    for i, char in enumerate(t):
-        if char == ":":
-            html += '<div class="colon">:</div>'
-        else:
-            pos = digit_map.get(char, "0px 0px")
-            html += f'''
-                <div class="flip-card">
-                    <div class="flap-line"></div>
-                    <div class="digit-sprite" style="background-position: {pos};"></div>
-                </div>
-            '''
-    html += '</div>'
-    
-    # 核心修正：使用 unsafe_allow_html=True 確保渲染 HTML
-    placeholder.markdown(html, unsafe_allow_html=True)
-    time.sleep(1)
+# 使用 components 確保 HTML 渲染
+st.components.v1.html(flip_clock_html, height=300)
