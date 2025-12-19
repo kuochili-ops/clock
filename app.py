@@ -1,11 +1,11 @@
 import streamlit as st
 
-st.set_page_config(page_title="極致真實翻板鐘", layout="centered")
+st.set_page_config(page_title="極致擬真機械翻板鐘", layout="centered")
 
-flip_ultra_html = """
+flip_final_html = """
 <style>
     body { background-color: #0e1117; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-    .clock { display: flex; gap: 10px; perspective: 1500px; }
+    .clock { display: flex; gap: 12px; perspective: 1500px; }
 
     .flip-card {
         position: relative;
@@ -13,24 +13,27 @@ flip_ultra_html = """
         height: 150px;
         font-family: 'Arial Black', sans-serif;
         font-size: 110px;
+        font-weight: bold;
         color: #f0f0f0;
-        border-radius: 12px;
+        text-align: center;
+        background-color: #222;
+        border-radius: 8px;
     }
 
-    /* 靜態背景層 */
-    .static {
+    /* 靜態底層 */
+    .top, .bottom {
         position: absolute; left: 0; width: 100%; height: 50%;
         overflow: hidden; background: #222; border: 1px solid #111;
     }
     .top { top: 0; border-radius: 8px 8px 0 0; line-height: 150px; border-bottom: 0.5px solid #000; }
     .bottom { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0px; }
 
-    /* 動態翻轉層 */
+    /* 動態翻轉葉片 */
     .leaf {
         position: absolute; top: 0; left: 0; width: 100%; height: 50%;
-        z-index: 5; transform-origin: bottom;
+        z-index: 10; transform-origin: bottom;
         transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.6s cubic-bezier(0.3, 0, 0.2, 1);
     }
 
     .leaf-front, .leaf-back {
@@ -46,17 +49,17 @@ flip_ultra_html = """
     .leaf-back { 
         transform: rotateX(-180deg); border-radius: 0 0 8px 8px; 
         line-height: 0px; border-top: 0.5px solid #000;
-        background: linear-gradient(to top, #222 50%, #111 100%); /* 增加背面陰影 */
+        background: linear-gradient(to top, #222 50%, #181818 100%);
     }
 
-    /* 動畫啟動狀態 */
+    /* 動畫狀態：讓落下更有弧度感 */
     .flipping .leaf { transform: rotateX(-180deg); }
 
-    /* 中間的中軸線 */
+    /* 中軸陰影與光澤 */
     .hinge {
         position: absolute; top: 50%; left: 0; width: 100%; height: 3px;
-        background: #000; z-index: 10; transform: translateY(-50%);
-        box-shadow: 0 1px 2px rgba(255,255,255,0.05);
+        background: #000; z-index: 15; transform: translateY(-50%);
+        box-shadow: 0 1px 2px rgba(255,255,255,0.08);
     }
 
     .colon { font-size: 60px; color: #444; align-self: center; margin-top: -10px; }
@@ -71,15 +74,10 @@ flip_ultra_html = """
         const el = document.getElementById(id);
         if (newVal === oldVal && el.innerHTML !== "") return;
 
-        // 真正的物理構造：
-        // 1. .top: 顯示【新】上半部 (在葉片後面預備)
-        // 2. .bottom: 顯示【舊】下半部 (等著被蓋住)
-        // 3. .leaf-front: 顯示【舊】上半部 (開始向下翻轉)
-        // 4. .leaf-back: 顯示【新】下半部 (翻過來變正面)
-        
+        // 核心物理圖層
         el.innerHTML = `
-            <div class="static top">${newVal}</div>
-            <div class="static bottom">${oldVal}</div>
+            <div class="top static">${newVal}</div>
+            <div class="bottom static">${oldVal}</div>
             <div class="leaf">
                 <div class="leaf-front">${oldVal}</div>
                 <div class="leaf-back">${newVal}</div>
@@ -88,7 +86,7 @@ flip_ultra_html = """
         `;
 
         el.classList.remove('flipping');
-        void el.offsetWidth; // 觸發 reflow
+        void el.offsetWidth; // 觸發 reflow 確保動畫重啟
         el.classList.add('flipping');
     }
 
@@ -119,7 +117,7 @@ flip_ultra_html = """
 </script>
 """
 
-st.title("🕰️ 機械物理翻板鐘 (終極修正版)")
-st.markdown("此版本模擬 **四層物理葉片** 的重疊邏輯，您可以清楚看到舊上半部翻下成為新下半部的過程。")
+st.title("🕰️ 極致物理翻板鐘 (Final Version)")
+st.markdown("細節改進：微調了翻轉路徑與陰影，模擬實體葉片受重力落下的質感。")
 
-st.components.v1.html(flip_ultra_html, height=500)
+st.components.v1.html(flip_final_html, height=500)
