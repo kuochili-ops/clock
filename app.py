@@ -1,52 +1,96 @@
 import streamlit as st
 
-st.set_page_config(page_title="3D 真實翻板時鐘", layout="centered")
+st.set_page_config(page_title="硬核物理翻板鐘", layout="centered")
 
-# CSS + JS：完整 3D 翻轉邏輯
-flip_clock_html = """
+flip_html = """
 <style>
-    body { background-color: #0e1117; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-    .clock { display: flex; gap: 10px; align-items: center; perspective: 1000px; }
-    
-    .flip-unit {
+    body { background-color: #0e1117; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .clock { display: flex; gap: 15px; perspective: 1000px; }
+
+    /* 單個數字容器 */
+    .flap-unit {
         position: relative;
         width: 80px;
         height: 120px;
         background-color: #333;
         border-radius: 8px;
-        font-family: 'Helvetica', Arial, sans-serif;
+        font-family: 'Helvetica', sans-serif;
         font-size: 80px;
         font-weight: bold;
-        color: white;
-        text-align: center;
         line-height: 120px;
+        text-align: center;
+        color: white;
     }
 
-    /* 頂部與底部的分界線 */
-    .flip-unit::before {
-        content: '';
+    /* 上下半部的共通樣式 */
+    .top, .bottom {
         position: absolute;
-        top: 50%;
+        width: 100%;
+        height: 50%;
+        overflow: hidden;
+        background-color: #333;
+        left: 0;
+        z-index: 1;
+    }
+    .top {
+        top: 0;
+        border-radius: 8px 8px 0 0;
+        line-height: 120px; /* 顯示上半部 */
+        border-bottom: 1px solid rgba(0,0,0,0.5);
+    }
+    .bottom {
+        bottom: 0;
+        border-radius: 0 0 8px 8px;
+        line-height: 0px; /* 顯示下半部 */
+    }
+
+    /* 翻轉葉片核心 */
+    .leaf {
+        position: absolute;
+        top: 0;
         left: 0;
         width: 100%;
-        height: 2px;
-        background: #000;
-        z-index: 10;
-        transform: translateY(-50%);
+        height: 50%;
+        z-index: 5;
+        transform-origin: bottom;
+        transition: transform 0.6s ease-in;
+        transform-style: preserve-3d;
     }
 
-    /* 翻轉動畫類別 */
-    .flipping {
-        animation: flip-down 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 葉片正面 (舊數字上半部) */
+    .leaf-front {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #333;
+        backface-visibility: hidden;
+        z-index: 2;
+        border-radius: 8px 8px 0 0;
     }
 
-    @keyframes flip-down {
-        0% { transform: rotateX(0deg); }
-        50% { transform: rotateX(-90deg); background-color: #444; }
-        100% { transform: rotateX(0deg); }
+    /* 葉片背面 (新數字下半部) */
+    .leaf-back {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #333;
+        transform: rotateX(-180deg);
+        backface-visibility: hidden;
+        border-radius: 0 0 8px 8px;
+        line-height: 0px; /* 顯示下半部 */
+        border-top: 1px solid rgba(0,0,0,0.5);
     }
 
-    .colon { font-size: 60px; color: #555; padding-bottom: 10px; }
+    /* 翻轉觸發動作 */
+    .flipping .leaf {
+        transform: rotateX(-180deg);
+    }
+
+    .colon { font-size: 60px; color: #555; align-self: center; }
 </style>
 
 <div class="clock" id="clock"></div>
@@ -54,28 +98,38 @@ flip_clock_html = """
 <script>
     let lastTime = "";
 
+    function createDigit(val, lastVal) {
+        const isChanged = lastVal !== undefined && val !== lastVal;
+        const animationClass = isChanged ? 'flipping' : '';
+        
+        // 如果沒變，顯示靜態數字；如果變了，執行翻頁構造
+        return `
+            <div class="flap-unit ${animationClass}">
+                <div class="top">${val}</div>
+                <div class="bottom">${lastVal !== undefined ? lastVal : val}</div>
+                <div class="leaf">
+                    <div class="leaf-front">${lastVal !== undefined ? lastVal : val}</div>
+                    <div class="leaf-back">${val}</div>
+                </div>
+            </div>
+        `;
+    }
+
     function updateClock() {
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + 
                         now.getMinutes().toString().padStart(2, '0') + 
                         now.getSeconds().toString().padStart(2, '0');
         
-        const clockEl = document.getElementById('clock');
-        
-        // 如果時間沒變就不更新，避免重複觸發動畫
         if (timeStr === lastTime) return;
 
         let html = '';
         for (let i = 0; i < timeStr.length; i++) {
-            // 檢查該位數是否改變，若改變則加入動畫類別
-            const isChanged = lastTime && timeStr[i] !== lastTime[i];
-            const animationClass = isChanged ? 'flipping' : '';
-            
-            html += `<div class="flip-unit ${animationClass}">${timeStr[i]}</div>`;
+            html += createDigit(timeStr[i], lastTime[i]);
             if (i === 1 || i === 3) html += '<div class="colon">:</div>';
         }
         
-        clockEl.innerHTML = html;
+        document.getElementById('clock').innerHTML = html;
         lastTime = timeStr;
     }
 
@@ -84,7 +138,7 @@ flip_clock_html = """
 </script>
 """
 
-st.title("🕰️ 3D 真實翻板鐘")
-st.write("現在數字在切換時會觸發 3D 翻轉動畫")
+st.title("🕰️ 物理級分葉翻板鐘")
+st.write("模擬真實機械構造：上半部葉片落下並翻轉 180 度。")
 
-st.components.v1.html(flip_clock_html, height=400)
+st.components.v1.html(flip_html, height=400)
