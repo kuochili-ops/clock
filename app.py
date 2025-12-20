@@ -2,31 +2,31 @@ import streamlit as st
 
 st.set_page_config(page_title="全球城市翻板鐘", layout="centered")
 
-flip_clock_no_seconds = """
+flip_clock_final = """
 <style>
     body { 
         background-color: #0e1117; 
         display: flex; flex-direction: column; align-items: center; 
         justify-content: center; min-height: 100vh; margin: 0; padding: 20px;
-        font-family: 'Courier New', Courier, monospace;
     }
     
     .container { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 100%; }
 
-    /* 城市翻板 */
-    .city-row { display: flex; gap: 12px; width: 100%; justify-content: center; cursor: pointer; }
+    /* 城市翻板 - 增加點擊區域感 */
+    .city-row { display: flex; gap: 15px; width: 100%; justify-content: center; cursor: pointer; }
     .city-card {
-        position: relative; width: 44vw; max-width: 180px; height: 80px;
+        position: relative; width: 42vw; max-width: 160px; height: 75px;
         perspective: 1000px; color: #fff;
     }
 
-    /* 時間翻板 (僅時、分) */
-    .clock { display: flex; gap: 15px; justify-content: center; align-items: center; }
+    /* 時間翻板 (時、分) */
+    .clock { display: flex; gap: 20px; justify-content: center; align-items: center; }
     .flip-card {
-        position: relative; width: 18vw; max-width: 80px; height: 26vw; max-height: 120px;
+        position: relative; width: 18vw; max-width: 85px; height: 26vw; max-height: 125px;
         font-weight: 900; color: #f0f0f0; perspective: 1000px;
     }
 
+    /* 統一翻板結構與絕對置中 */
     .top, .bottom, .leaf-front, .leaf-back {
         position: absolute; left: 0; width: 100%; height: 50%;
         overflow: hidden; background: #1a1a1a;
@@ -37,25 +37,28 @@ flip_clock_no_seconds = """
     .top, .leaf-front { top: 0; border-radius: 8px 8px 0 0; align-items: flex-end; }
     .bottom, .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; align-items: flex-start; }
 
+    /* 修正核心：200% 高度容器確保文字對齊軸線 */
     .text-box {
         height: 200%; 
         display: flex; align-items: center;
         line-height: 1;
+        transition: none;
     }
     
     .top .text-box, .leaf-front .text-box { transform: translateY(50%); }
     .bottom .text-box, .leaf-back .text-box { transform: translateY(-50%); }
 
-    /* 字體大小優化 */
-    .city-card .text-box { font-size: 22px; font-family: "Microsoft JhengHei", sans-serif; }
-    .flip-card .text-box { font-size: 20vw; }
+    /* 文字樣式 */
+    .city-card .text-box { font-size: 20px; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; }
+    .flip-card .text-box { font-size: 20vw; font-family: 'Courier New', Courier, monospace; }
     
     @media (min-width: 600px) {
-        .flip-card .text-box { font-size: 100px; }
-        .city-card .text-box { font-size: 30px; }
+        .flip-card .text-box { font-size: 110px; }
+        .city-card .text-box { font-size: 28px; }
         .flip-card { width: 100px; height: 140px; }
     }
 
+    /* 動畫效果 */
     .leaf {
         position: absolute; top: 0; left: 0; width: 100%; height: 50%;
         z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
@@ -64,13 +67,14 @@ flip_clock_no_seconds = """
     .leaf-back { transform: rotateX(-180deg); }
     .flipping .leaf { transform: rotateX(-180deg); }
 
+    /* 中軸分隔線 */
     .hinge {
-        position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
-        background: rgba(0,0,0,0.8); z-index: 20; transform: translateY(-50%);
+        position: absolute; top: 50%; left: 0; width: 100%; height: 1.5px;
+        background: rgba(0,0,0,0.7); z-index: 20; transform: translateY(-50%);
     }
 
-    .label { font-size: 16px; color: #555; align-self: flex-end; padding-bottom: 10px; font-weight: bold; }
-    .unit-group { display: flex; gap: 5px; align-items: center; }
+    .label { font-size: 18px; color: #666; align-self: flex-end; padding-bottom: 10px; font-weight: bold; }
+    .unit-group { display: flex; gap: 4px; align-items: center; }
 </style>
 
 <div class="container">
@@ -98,9 +102,9 @@ flip_clock_no_seconds = """
         return `<div class="text-box">${val}</div><div class="hinge"></div>`;
     }
 
-    function updateFlip(id, newVal, oldVal) {
+    function updateFlip(id, newVal, oldVal, force = false) {
         const el = document.getElementById(id);
-        if (newVal === oldVal && el.innerHTML !== "") return;
+        if (!force && newVal === oldVal && el.innerHTML !== "") return;
         
         el.innerHTML = `
             <div class="top">${createCardHTML(newVal)}</div>
@@ -117,7 +121,8 @@ flip_clock_no_seconds = """
 
     function nextCity() {
         currentCityIdx = (currentCityIdx + 1) % cities.length;
-        prevTimeStr = ""; // 強制刷新時間
+        // 重置 prevTimeStr 以確保切換城市時數字一定會翻動
+        prevTimeStr = "";
         tick();
     }
 
@@ -125,16 +130,18 @@ flip_clock_no_seconds = """
         const city = cities[currentCityIdx];
         const formatter = new Intl.DateTimeFormat('en-GB', {
             timeZone: city.zone,
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit'
+            hour12: false, hour: '2-digit', minute: '2-digit'
         });
         const timeStr = formatter.format(new Date()).replace(/:/g, '');
 
         if (document.getElementById('clock').innerHTML === "") {
             document.getElementById('clock').innerHTML = `
-                <div class="unit-group"><div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div></div>
-                <div class="unit-group"><div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div></div>
+                <div class="unit-group">
+                    <div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div>
+                </div>
+                <div class="unit-group">
+                    <div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div>
+                </div>
             `;
         }
 
@@ -144,20 +151,20 @@ flip_clock_no_seconds = """
 
         for (let i = 0; i < 4; i++) {
             const nv = timeStr[i];
-            const ov = prevTimeStr[i] || nv;
-            if (nv !== ov || prevTimeStr === "") {
-                updateFlip(`d${i}`, nv, ov);
+            const ov = prevTimeStr === "" ? nv : (prevTimeStr[i] || nv);
+            // 當切換城市(prevTimeStr為空)或時間改變時翻轉
+            if (prevTimeStr === "" || nv !== ov) {
+                updateFlip(`d${i}`, nv, ov, prevTimeStr === "");
             }
         }
         prevTimeStr = timeStr;
     }
 
-    // 因為移除秒數，改為每 10 秒檢查一次即可，或者保留 1 秒檢查確保分鐘跳轉及時
     setInterval(tick, 1000);
     tick();
 </script>
 """
 
-st.title("🌏 全球城市翻板鐘")
-st.markdown("已移除秒數，點擊城市翻板切換時區。")
-st.components.v1.html(flip_clock_no_seconds, height=500)
+st.title("🕰️ 全球翻板鐘")
+st.markdown("已優化時間切換邏輯。")
+st.components.v1.html(flip_clock_final, height=500)
