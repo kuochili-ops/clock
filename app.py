@@ -7,7 +7,7 @@ API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "img": "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_2700,h_1800/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/wgnjys095pdwp1qjvh6k/%E5%8F%B0%E5%8C%97%EF%BD%9C%E7%B6%93%E5%85%B8%E4%B8%80%E6%97%A5%E9%81%8A-Klook%E5%AE%A2%E8%B7%AF.jpg"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.chinatimes.com/newsphoto/2023-01-06/656/20230106004870.jpg"},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/HollywoodSign.jpg/1200px-HollywoodSign.jpg"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/HollywoodSign.jpg/1280px-HollywoodSign.jpg"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
     {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=1000&q=80"},
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
