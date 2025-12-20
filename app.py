@@ -18,7 +18,7 @@ MY_VIP_LIST = [
     {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "lat": 31.23, "lon": 121.47, "vip": True, "img": "https://imgb10.photophoto.cn/20160612/shanghaiwaitanjiejing-24089814_3.jpg"},
     {"zh": "羅 馬", "en": "Rome", "tz": "Europe/Rome", "q": "Rome", "lat": 41.90, "lon": 12.49, "vip": True, "img": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80"},
     {"zh": "阿姆斯特丹", "en": "Amsterdam", "tz": "Europe/Amsterdam", "q": "Amsterdam", "lat": 52.36, "lon": 4.89, "vip": True, "img": "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?w=1200&q=80"},
-    {"zh": "法蘭克福", "en": "Frankfurt", "tz": "Europe/Berlin", "q": "Frankfurt", "lat": 50.11, "lon": 8.68, "vip": True, "img": "https://images.unsplash.com/photo-1565053164104-d4b998188188?w=1200&q=80"},
+    {"zh": "法蘭克福", "en": "Frankfurt", "tz": "Europe/Berlin", "q": "Frankfurt", "lat": 50.11, "lon": 8.68, "vip": True, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Skyline_Frankfurt_am_Main_2015.jpg/330px-Skyline_Frankfurt_am_Main_2015.jpg"},
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "lat": 55.67, "lon": 12.56, "vip": True, "img": "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=1200&q=80"},
     {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00, "vip": True, "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80"},
     {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "lat": 37.77, "lon": -122.41, "vip": True, "img": "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1200&q=80"},
