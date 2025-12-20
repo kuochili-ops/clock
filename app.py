@@ -1,154 +1,94 @@
 import streamlit as st
-from flip_clock_lib import st_flip_clock
+import streamlit.components.v1 as components
 
-st.title("🌏 全球城市翻板鐘")
-st_flip_clock()
+def st_flip_clock():
+    """
+    基於「大寫中文穩定版」佈局修正：
+    1. 修正 line-height 計算，移除多餘板面邊緣。
+    2. 縮小 hinge (轉軸) 縫隙至 1px。
+    3. 採用 UTC 偏移計算，確保時區一定連動。
+    """
+    flip_html = """
+    <style>
+        body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; overflow: hidden; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
 
-'''import streamlit as st
-
-st.set_page_config(page_title="大寫中文翻板鐘", layout="centered")
-
-# 根據您先前的要求，我們將此邏輯保留並封裝
-flip_chinese_logic = """
-<style>
-    body { 
-        background-color: #0e1117; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        min-height: 100vh; 
-        margin: 0; 
-        padding: 10px;
-    }
-    
-    .clock { 
-        display: flex; 
-        gap: 10px; 
-        perspective: 1500px; 
-        flex-wrap: wrap; /* 關鍵：寬度不夠時自動換行 */
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-
-    /* 響應式卡片尺寸：手機端會自動縮小 */
-    .flip-card {
-        position: relative;
-        width: 18vw;   /* 使用寬度百分比單位 */
-        max-width: 80px; 
-        height: 25vw;
-        max-height: 110px;
-        font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-        font-size: 14vw; /* 字體大小隨寬度縮放 */
-        max-font-size: 65px;
-        font-weight: 900;
-        color: #e0e0e0;
-        text-align: center;
-    }
-    
-    /* 桌面端大螢幕微調 */
-    @media (min-width: 600px) {
-        .flip-card {
-            width: 100px;
-            height: 140px;
-            font-size: 70px;
+        /* 城市板 */
+        .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; margin-bottom: 20px; }
+        .city-card { 
+            position: relative; width: 44vw; max-width: 180px; height: 18vw; max-height: 70px;
+            font-family: "Microsoft JhengHei", sans-serif; font-size: 6vw; font-weight: 900; color: #fff; text-align: center;
         }
-    }
+        @media (min-width: 600px) { .city-card { font-size: 26px; } }
 
-    /* 靜態底板 */
-    .top, .bottom {
-        position: absolute; left: 0; width: 100%; height: 50%;
-        overflow: hidden; background: #222; border: 1px solid #111;
-    }
-    .top { 
-        top: 0; border-radius: 8px 8px 0 0; 
-        line-height: 25vw; /* 需與 height 對齊 */
-        border-bottom: 1px solid #000; 
-    }
-    @media (min-width: 600px) { .top { line-height: 140px; } }
+        /* 時間板 (完全採用您提供的 vw 布局) */
+        .clock { display: flex; gap: 10px; perspective: 1500px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; }
+        .flip-card {
+            position: relative; width: 18vw; max-width: 80px; height: 25vw; max-height: 110px;
+            font-family: "Arial Black", sans-serif; font-size: 14.5vw; font-weight: 900; color: #e0e0e0; text-align: center;
+        }
+        @media (min-width: 600px) { .flip-card { width: 100px; height: 140px; font-size: 70px; } }
 
-    .bottom { 
-        bottom: 0; border-radius: 0 0 8px 8px; 
-        line-height: 0px; 
-    }
+        /* 精確切割邏輯：解決「多一塊板」問題 */
+        .top, .bottom, .leaf-front, .leaf-back {
+            position: absolute; left: 0; width: 100%; height: 50%;
+            overflow: hidden; background: #222; box-sizing: border-box;
+            border: 0.5px solid #111; /* 縮小邊框感 */
+        }
+        
+        /* 城市板切割：line-height 等於板子總高度 */
+        .city-card .top, .city-card .leaf-front { top: 0; border-radius: 6px 6px 0 0; line-height: 18vw; }
+        .city-card .bottom, .city-card .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; line-height: 0; }
+        @media (min-width: 600px) { .city-card .top, .city-card .leaf-front { line-height: 70px; } }
 
-    /* 翻轉葉片 */
-    .leaf {
-        position: absolute; top: 0; left: 0; width: 100%; height: 50%;
-        z-index: 10; transform-origin: bottom;
-        transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+        /* 時間板切割：修正 line-height 確保文字置中無殘影 */
+        .flip-card .top, .flip-card .leaf-front { top: 0; border-radius: 8px 8px 0 0; line-height: 25vw; }
+        .flip-card .bottom, .flip-card .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0; }
+        @media (min-width: 600px) { .flip-card .top, .flip-card .leaf-front { line-height: 140px; } }
 
-    .leaf-front, .leaf-back {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        backface-visibility: hidden; background: #222; overflow: hidden;
-    }
+        .leaf {
+            position: absolute; top: 0; left: 0; width: 100%; height: 50%;
+            z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .leaf-back { transform: rotateX(-180deg); }
+        .flipping .leaf { transform: rotateX(-180deg); }
 
-    .leaf-front { 
-        z-index: 2; border-radius: 8px 8px 0 0; 
-        line-height: 25vw; 
-        border-bottom: 1px solid #000; 
-    }
-    @media (min-width: 600px) { .leaf-front { line-height: 140px; } }
+        /* 修正轉軸：縮小縫隙 */
+        .hinge { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(0,0,0,0.8); z-index: 20; transform: translateY(-50%); }
+        
+        .label { font-size: 16px; color: #555; align-self: flex-end; padding-bottom: 5px; font-weight: bold; }
+        .unit-group { display: flex; gap: 4px; align-items: center; }
+    </style>
 
-    .leaf-back { 
-        transform: rotateX(-180deg); border-radius: 0 0 8px 8px; 
-        line-height: 0px; border-top: 1px solid #000;
-        background: linear-gradient(to top, #222 50%, #1a1a1a 100%);
-    }
+    <div class="container">
+        <div class="city-row" onclick="nextCity()">
+            <div class="city-card" id="city-cn"></div>
+            <div class="city-card" id="city-en"></div>
+        </div>
+        <div class="clock" id="clock"></div>
+    </div>
 
-    .flipping .leaf { transform: rotateX(-180deg); }
+    <script>
+        const cities = [
+            { cn: "臺 北", en: "Taipei", offset: 8 },
+            { cn: "東 京", en: "Tokyo", offset: 9 },
+            { cn: "倫 敦", en: "London", offset: 0 },
+            { cn: "紐 約", en: "New York", offset: -5 },
+            { cn: "洛 杉 磯", en: "Los Angeles", offset: -8 }
+        ];
 
-    .hinge {
-        position: absolute; top: 50%; left: 0; width: 100%; height: 2px;
-        background: #000; z-index: 20; transform: translateY(-50%);
-    }
+        let currentCityIdx = 0, prevTimeStr = "", prevCity = { cn: "", en: "" };
 
-    .label { 
-        font-size: 18px; 
-        color: #888; 
-        align-self: flex-end; 
-        padding-bottom: 5px; 
-        font-weight: bold;
-    }
-    
-    /* 每組時分秒在手機上保持在一起 */
-    .unit-group {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-    }
-</style>
-
-<div class="clock" id="clock"></div>
-
-<script>
-    let prevTime = ["", "", ""];
-    const charMap = ["零", "壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"];
-
-    function getChinese(valStr) {
-        return [charMap[parseInt(valStr[0])], charMap[parseInt(valStr[1])]];
-    }
-
-    function updateDigitPair(startIndex, newValStr, oldValStr) {
-        const newChars = getChinese(newValStr);
-        const oldChars = oldValStr ? getChinese(oldValStr) : newChars;
-
-        for (let i = 0; i < 2; i++) {
-            const id = `d${startIndex + i}`;
-            const nv = newChars[i];
-            const ov = oldChars[i];
+        function updateFlip(id, newVal, oldVal) {
             const el = document.getElementById(id);
-
-            if (nv === ov && el.innerHTML !== "") continue;
-
+            if (newVal === oldVal && el.innerHTML !== "") return;
             el.innerHTML = `
-                <div class="top">${nv}</div>
-                <div class="bottom">${ov}</div>
+                <div class="top">${newVal}</div>
+                <div class="bottom">${oldVal}</div>
                 <div class="leaf">
-                    <div class="leaf-front">${ov}</div>
-                    <div class="leaf-back">${nv}</div>
+                    <div class="leaf-front">${oldVal}</div>
+                    <div class="leaf-back">${newVal}</div>
                 </div>
                 <div class="hinge"></div>
             `;
@@ -156,41 +96,43 @@ flip_chinese_logic = """
             void el.offsetWidth;
             el.classList.add('flipping');
         }
-    }
 
-    function tick() {
-        const now = new Date();
-        const h = now.getHours().toString().padStart(2, '0');
-        const m = now.getMinutes().toString().padStart(2, '0');
-        const s = now.getSeconds().toString().padStart(2, '0');
-
-        if (prevTime[0] === "") {
-            document.getElementById('clock').innerHTML = `
-                <div class="unit-group">
-                    <div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div>
-                </div>
-                <div class="unit-group">
-                    <div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div>
-                </div>
-                <div class="unit-group">
-                    <div class="flip-card" id="d4"></div><div class="flip-card" id="d5"></div><div class="label">秒</div>
-                </div>
-            `;
+        function nextCity() { 
+            currentCityIdx = (currentCityIdx + 1) % cities.length; 
+            prevTimeStr = ""; 
+            tick(); 
         }
 
-        updateDigitPair(0, h, prevTime[0]);
-        updateDigitPair(2, m, prevTime[1]);
-        updateDigitPair(4, s, prevTime[2]);
-        prevTime = [h, m, s];
-    }
+        function tick() {
+            const city = cities[currentCityIdx];
+            // 強制時區修正：確保手機端切換時時間一定跳動
+            const now = new Date();
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const targetTime = new Date(utcTime + (3600000 * city.offset));
+            
+            const h = targetTime.getHours().toString().padStart(2, '0');
+            const m = targetTime.getMinutes().toString().padStart(2, '0');
+            const timeStr = h + m;
 
-    setInterval(tick, 1000);
-    tick();
-</script>
-"""
-st.title("🕰️ 繁體中文翻板鐘")
-st.markdown("已優化手機直式瀏覽，支援自動換行與縮放。")
+            if (document.getElementById('clock').innerHTML === "") {
+                document.getElementById('clock').innerHTML = `
+                    <div class="unit-group"><div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div></div>
+                    <div class="unit-group"><div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div></div>
+                `;
+            }
 
-# 增加高度以容納手機端換行後的高度
-st.components.v1.html(flip_chinese_logic, height=450)
-'''
+            updateFlip("city-cn", city.cn, prevCity.cn || city.cn);
+            updateFlip("city-en", city.en, prevCity.en || city.en);
+            prevCity = { cn: city.cn, en: city.en };
+
+            for (let i = 0; i < 4; i++) {
+                const nv = timeStr[i]; 
+                const ov = prevTimeStr[i] || nv;
+                if (nv !== ov || prevTimeStr === "") updateFlip(`d${i}`, nv, ov);
+            }
+            prevTimeStr = timeStr;
+        }
+        setInterval(tick, 1000); tick();
+    </script>
+    """
+    return components.html(flip_html, height=450)
