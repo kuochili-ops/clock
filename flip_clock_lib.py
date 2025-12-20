@@ -3,39 +3,40 @@ import streamlit.components.v1 as components
 
 def st_flip_clock():
     """
-    極簡化翻板邏輯：回歸 line-height 切割法，杜絕鏡像殘影，並修正時區失效。
+    完全採用原始「大寫中文版」翻板結構。
+    解決殘影位移問題，並鎖定 UTC 時區偏移計算。
     """
     flip_html = """
     <style>
         body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 100%; }
 
-        /* 城市板面板設定 */
+        /* 城市板 */
         .city-row { display: flex; gap: 15px; width: 100%; justify-content: center; cursor: pointer; }
         .city-card { 
-            position: relative; width: 42vw; max-width: 170px; height: 70px; 
-            font-family: sans-serif; font-size: 24px; font-weight: bold; color: #fff; text-align: center;
+            position: relative; width: 42vw; max-width: 170px; height: 75px; 
+            font-family: sans-serif; font-size: 24px; font-weight: 900; color: #fff; text-align: center;
         }
 
-        /* 時間板面板設定 */
-        .clock { display: flex; gap: 10px; justify-content: center; align-items: center; }
-        .flip-card { 
-            position: relative; width: 18vw; max-width: 85px; height: 110px; 
-            font-family: "Arial Black", sans-serif; font-size: 70px; font-weight: 900; color: #eee; text-align: center;
+        /* 時間板 */
+        .clock { display: flex; gap: 15px; justify-content: center; align-items: center; }
+        .flip-card {
+            position: relative; width: 120px; height: 160px;
+            font-family: "Arial Black", sans-serif; font-size: 85px; font-weight: 900; color: #e0e0e0; text-align: center;
         }
 
-        /* 關鍵：純淨切割法 (無位移、無殘影) */
+        /* 完全採用您原始的切割與對齊邏輯 (杜絕殘影) */
         .top, .bottom, .leaf-front, .leaf-back {
             position: absolute; left: 0; width: 100%; height: 50%;
             overflow: hidden; background: #222; border: 1px solid #111; box-sizing: border-box;
         }
         
-        /* 城市板文字高度對齊 */
-        .city-card .top, .city-card .leaf-front { top: 0; border-radius: 6px 6px 0 0; line-height: 70px; }
-        .city-card .bottom, .city-card .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; line-height: 0px; }
+        /* 城市板切割設定 */
+        .city-card .top, .city-card .leaf-front { top: 0; border-radius: 8px 8px 0 0; line-height: 75px; border-bottom: 1px solid #000; }
+        .city-card .bottom, .city-card .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0px; }
 
-        /* 時間板文字高度對齊 */
-        .flip-card .top, .flip-card .leaf-front { top: 0; border-radius: 8px 8px 0 0; line-height: 110px; }
+        /* 時間板切割設定 */
+        .flip-card .top, .flip-card .leaf-front { top: 0; border-radius: 8px 8px 0 0; line-height: 160px; border-bottom: 1px solid #000; }
         .flip-card .bottom, .flip-card .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0px; }
 
         .leaf {
@@ -46,8 +47,15 @@ def st_flip_clock():
         .leaf-back { transform: rotateX(-180deg); }
         .flipping .leaf { transform: rotateX(-180deg); }
 
-        .hinge { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; transform: translateY(-50%); }
-        .label { font-size: 18px; color: #555; align-self: flex-end; padding-bottom: 8px; font-weight: bold; }
+        .hinge { position: absolute; top: 50%; left: 0; width: 100%; height: 3px; background: #000; z-index: 20; transform: translateY(-50%); }
+        .label { font-size: 24px; color: #444; align-self: flex-end; padding-bottom: 15px; font-weight: bold; }
+        
+        /* 手機端適應：縮小時間板寬高，但保持切割比例 */
+        @media (max-width: 600px) {
+            .flip-card { width: 18vw; height: 26vw; font-size: 15vw; }
+            .flip-card .top, .flip-card .leaf-front { line-height: 26vw; }
+            .label { font-size: 16px; padding-bottom: 8px; }
+        }
     </style>
 
     <div class="container">
@@ -88,14 +96,14 @@ def st_flip_clock():
 
         function nextCity() { 
             currentCityIdx = (currentCityIdx + 1) % cities.length; 
-            prevTimeStr = ""; // 強迫切換城市後重刷時間
+            prevTimeStr = ""; 
             tick(); 
         }
 
         function tick() {
             const city = cities[currentCityIdx];
             
-            // 解決時區問題：使用 UTC 加手動偏移
+            // 解決時區問題：手動計算 UTC + 偏移
             const d = new Date();
             const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
             const local = new Date(utc + (3600000 * city.offset));
@@ -128,4 +136,4 @@ def st_flip_clock():
         setInterval(tick, 1000); tick();
     </script>
     """
-    return components.html(flip_html, height=450)
+    return components.html(flip_html, height=500)
