@@ -1,8 +1,13 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import time
 
 def st_flip_clock():
-    # 這裡的 HTML 代碼做了大幅度簡化
+    """
+    1. 移除多餘板塊：徹底刪除 unit-group 容器，讓畫面只有純粹的 4 個數字翻板。
+    2. 強制時區連動：改用 getTime() 毫秒數進行純數學運算，繞過瀏覽器本地化邏輯。
+    3. 唯一 Key 值：利用 time.time() 確保每次存檔後 Streamlit 都會強制重載此模組。
+    """
     flip_html = """
     <style>
         body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 0; overflow: hidden; }
@@ -12,9 +17,12 @@ def st_flip_clock():
         .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; }
         .city-card { position: relative; width: 44vw; max-width: 170px; height: 60px; font-family: sans-serif; font-size: 24px; font-weight: 900; color: #fff; text-align: center; }
 
-        /* 時間板：徹底移除 label 與 unit-group，只剩 4 個數字 */
+        /* 時間板：徹底移除 label (時/分)，移除所有外圍容器，只剩 4 個數字 */
         .clock { display: flex; gap: 6px; perspective: 1000px; justify-content: center; align-items: center; }
-        .flip-card { position: relative; width: 22vw; max-width: 85px; height: 110px; font-family: "Arial Black", sans-serif; font-size: 80px; font-weight: 900; color: #e0e0e0; text-align: center; }
+        .flip-card { 
+            position: relative; width: 22vw; max-width: 85px; height: 110px; 
+            font-family: "Arial Black", sans-serif; font-size: 80px; font-weight: 900; color: #e0e0e0; text-align: center;
+        }
 
         /* 物理切割：確保無殘影 */
         .top, .bottom, .leaf-front, .leaf-back {
@@ -25,7 +33,7 @@ def st_flip_clock():
         .top, .leaf-front { top: 0; border-radius: 6px 6px 0 0; border-bottom: 1px solid #000; align-items: flex-end; }
         .bottom, .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; align-items: flex-start; }
         
-        /* 物理偏移對齊文字 */
+        /* 物理位移對齊文字中心 */
         .top span, .leaf-front span { transform: translateY(50%); }
         .bottom span, .leaf-back span { transform: translateY(-50%); }
 
@@ -77,13 +85,17 @@ def st_flip_clock():
 
         function tick() {
             const city = cities[cityIdx];
-            // 絕對時區計算：避免設備 locale 干擾
+            // 改用純數學計算小時，避開 getHours() 可能產生的本地化自動校正
             const d = new Date();
-            const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-            const target = new Date(utc + (city.offset * 3600000));
-            const h = String(target.getHours()).padStart(2, '0');
-            const m = String(target.getMinutes()).padStart(2, '0');
-            const timeStr = h + m;
+            const utcTotalMinutes = (d.getTime() / 60000) + d.getTimezoneOffset();
+            const localTotalMinutes = utcTotalMinutes + (city.offset * 60);
+            
+            const hours = Math.floor((localTotalMinutes / 60) % 24);
+            const mins = Math.floor(localTotalMinutes % 60);
+            
+            const hStr = String(hours < 0 ? hours + 24 : hours).padStart(2, '0');
+            const mStr = String(mins).padStart(2, '0');
+            const timeStr = hStr + mStr;
 
             updateFlip("city-cn", city.cn, prevCity.cn || city.cn);
             updateFlip("city-en", city.en, prevCity.en || city.en);
@@ -99,6 +111,5 @@ def st_flip_clock():
         setInterval(tick, 1000); tick();
     </script>
     """
-    # 修正：給予唯一的 key 避免 Streamlit 緩存舊的 iframe
-    import time
-    return components.html(flip_html, height=400, key=f"flip_clock_{time.time()}")
+    # 加入時間戳 key，強制 Streamlit 每次存檔後都完整重新渲染，不吃快取
+    return components.html(flip_html, height=400, key=f"clock_{time.time()}")
