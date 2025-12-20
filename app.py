@@ -9,7 +9,7 @@ CITIES = [
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.chinatimes.com/newsphoto/2023-01-06/656/20230106004870.jpg"},
     {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "img": "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=1200&q=80"},
     {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "img": "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1200&q=80"},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/HollywoodSign.jpg/1200px-HollywoodSign.jpg"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/HollywoodSign.jpg/1280px-HollywoodSign.jpg"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
     {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=1000&q=80"},
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
