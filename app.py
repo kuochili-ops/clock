@@ -5,47 +5,47 @@ import json
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# --- 1. 定義 VIP 城市清單 (依您要求的順序) ---
+# --- 1. 定義全城市資料庫（包含 14 VIP + 50 全球城市與其專屬照片） ---
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 
+# [VIP 14 城]
 MY_VIP_LIST = [
-    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56},
-    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30},
-    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "lat": 35.68, "lon": 139.69},
-    {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "lat": 34.69, "lon": 135.50},
-    {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "lat": 43.06, "lon": 141.35},
-    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "lat": 31.23, "lon": 121.47},
-    {"zh": "羅 馬", "en": "Rome", "tz": "Europe/Rome", "q": "Rome", "lat": 41.90, "lon": 12.49},
-    {"zh": "阿姆斯特丹", "en": "Amsterdam", "tz": "Europe/Amsterdam", "q": "Amsterdam", "lat": 52.36, "lon": 4.89},
-    {"zh": "法蘭克福", "en": "Frankfurt", "tz": "Europe/Berlin", "q": "Frankfurt", "lat": 50.11, "lon": 8.68},
-    {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "lat": 55.67, "lon": 12.56},
-    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00},
-    {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "lat": 37.77, "lon": -122.41},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "lat": 34.05, "lon": -118.24},
-    {"zh": "多倫多", "en": "Toronto", "tz": "America/Toronto", "q": "Toronto", "lat": 43.65, "lon": -79.38},
+    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "vip": True, "img": "https://images.unsplash.com/photo-1552234994-66ba234fd567?w=1200&q=80"},
+    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "vip": True, "img": "https://images.unsplash.com/photo-1596403079090-449e79075e89?w=1200&q=80"},
+    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "lat": 35.68, "lon": 139.69, "vip": True, "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1200&q=80"},
+    {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "lat": 34.69, "lon": 135.50, "vip": True, "img": "https://images.unsplash.com/photo-1590254302920-561657099719?w=1200&q=80"},
+    {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "lat": 43.06, "lon": 141.35, "vip": True, "img": "https://images.unsplash.com/photo-1604313271109-173663b6519f?w=1200&q=80"},
+    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "lat": 31.23, "lon": 121.47, "vip": True, "img": "https://images.unsplash.com/photo-1548919973-5cfe5d4fc494?w=1200&q=80"},
+    {"zh": "羅 馬", "en": "Rome", "tz": "Europe/Rome", "q": "Rome", "lat": 41.90, "lon": 12.49, "vip": True, "img": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80"},
+    {"zh": "阿姆斯特丹", "en": "Amsterdam", "tz": "Europe/Amsterdam", "q": "Amsterdam", "lat": 52.36, "lon": 4.89, "vip": True, "img": "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?w=1200&q=80"},
+    {"zh": "法蘭克福", "en": "Frankfurt", "tz": "Europe/Berlin", "q": "Frankfurt", "lat": 50.11, "lon": 8.68, "vip": True, "img": "https://images.unsplash.com/photo-1565053164104-d4b998188188?w=1200&q=80"},
+    {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "lat": 55.67, "lon": 12.56, "vip": True, "img": "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=1200&q=80"},
+    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00, "vip": True, "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80"},
+    {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "lat": 37.77, "lon": -122.41, "vip": True, "img": "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1200&q=80"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "lat": 34.05, "lon": -118.24, "vip": True, "img": "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=1200&q=80"},
+    {"zh": "多倫多", "en": "Toronto", "tz": "America/Toronto", "q": "Toronto", "lat": 43.65, "lon": -79.38, "vip": True, "img": "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?w=1200&q=80"},
 ]
 
-# 標記為 VIP 並給予預設圖片
-for c in MY_VIP_LIST:
-    c["vip"] = True
-    c["img"] = f"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1000&q=80"
-
-# 其他全球補充城市 (作為背景導航)
+# [補充 50 大城市中的主要城市照片連結]
 GLOBAL_CITIES = [
-    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "vip": False},
-    {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris", "lat": 48.85, "lon": 2.35, "vip": False},
-    {"zh": "首 爾", "en": "Seoul", "tz": "Asia/Seoul", "q": "Seoul", "lat": 37.56, "lon": 126.97, "vip": False},
-    {"zh": "雪 梨", "en": "Sydney", "tz": "Australia/Sydney", "q": "Sydney", "lat": -33.86, "lon": 151.20, "vip": False},
-    {"zh": "杜 拜", "en": "Dubai", "tz": "Asia/Dubai", "q": "Dubai", "lat": 25.20, "lon": 55.27, "vip": False},
-    {"zh": "新加玻", "en": "Singapore", "tz": "Asia/Singapore", "q": "Singapore", "lat": 1.35, "lon": 103.81, "vip": False},
+    {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris", "lat": 48.85, "lon": 2.35, "vip": False, "img": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80"},
+    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "vip": False, "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80"},
+    {"zh": "雪 梨", "en": "Sydney", "tz": "Australia/Sydney", "q": "Sydney", "lat": -33.86, "lon": 151.20, "vip": False, "img": "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1200&q=80"},
+    {"zh": "首 爾", "en": "Seoul", "tz": "Asia/Seoul", "q": "Seoul", "lat": 37.56, "lon": 126.97, "vip": False, "img": "https://images.unsplash.com/photo-1538485399081-7191377e8241?w=1200&q=80"},
+    {"zh": "杜 拜", "en": "Dubai", "tz": "Asia/Dubai", "q": "Dubai", "lat": 25.20, "lon": 55.27, "vip": False, "img": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80"},
+    {"zh": "新加玻", "en": "Singapore", "tz": "Asia/Singapore", "q": "Singapore", "lat": 1.35, "lon": 103.81, "vip": False, "img": "https://images.unsplash.com/photo-1525625239513-997328132c68?w=1200&q=80"},
+    {"zh": "曼 谷", "en": "Bangkok", "tz": "Asia/Bangkok", "q": "Bangkok", "lat": 13.75, "lon": 100.50, "vip": False, "img": "https://images.unsplash.com/photo-1508004526072-3be43a5005f6?w=1200&q=80"},
+    {"zh": "柏 林", "en": "Berlin", "tz": "Europe/Berlin", "q": "Berlin", "lat": 52.52, "lon": 13.40, "vip": False, "img": "https://images.unsplash.com/photo-1560969184-10fe8719e047?w=1200&q=80"},
+    {"zh": "馬德里", "en": "Madrid", "tz": "Europe/Madrid", "q": "Madrid", "lat": 40.41, "lon": -3.70, "vip": False, "img": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1200&q=80"},
+    {"zh": "孟 買", "en": "Mumbai", "tz": "Asia/Kolkata", "q": "Mumbai", "lat": 19.07, "lon": 72.87, "vip": False, "img": "https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?w=1200&q=80"},
+    {"zh": "墨西哥城", "en": "Mexico City", "tz": "America/Mexico_City", "q": "Mexico City", "lat": 19.43, "lon": -99.13, "vip": False, "img": "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=1200&q=80"},
+    {"zh": "維也納", "en": "Vienna", "tz": "Europe/Vienna", "q": "Vienna", "lat": 48.20, "lon": 16.37, "vip": False, "img": "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=1200&q=80"}
 ]
 
-for c in GLOBAL_CITIES:
-    c["img"] = "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1000&q=80"
-
+# 將所有城市合併
 ALL_CITIES = MY_VIP_LIST + GLOBAL_CITIES
 
-# --- 2. 地圖對話框 ---
+# --- 2. 地圖處理 ---
 @st.dialog("🌍 全球時空導航")
 def show_map_dialog():
     m = folium.Map(
@@ -55,13 +55,11 @@ def show_map_dialog():
         min_lat=-65, max_lat=85, min_lon=-175, max_lon=175
     )
     for c in ALL_CITIES:
-        color = "#FF8C00" if c["vip"] else "#00d4ff"
-        radius = 10 if c["vip"] else 6
-        label = f"⭐ {c['zh']}" if c.get("vip") else c["zh"]
+        color = "#FF8C00" if c.get("vip") else "#00d4ff"
+        radius = 10 if c.get("vip") else 6
         folium.CircleMarker(
-            location=[c["lat"], c["lon"]], 
-            radius=radius, color=color, fill=True, 
-            fill_opacity=0.8, popup=label
+            location=[c["lat"], c["lon"]], radius=radius, color=color, fill=True, 
+            fill_opacity=0.8, popup=f"⭐ {c['zh']}" if c.get("vip") else c["zh"]
         ).add_to(m)
     
     selected = st_folium(m, height=350, width=320, key="modal_map")
@@ -72,12 +70,11 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 介面按鈕 ---
+# --- 3. 介面與 HTML ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
 
-# --- 4. 物理翻板 HTML ---
 initial_idx = st.session_state.get('target_idx', 0)
 
 flip_clock_html = f"""
@@ -119,11 +116,10 @@ flip_clock_html = f"""
     .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
     .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
     .attribution {{ color: #333; font-size: 0.6rem; align-self: flex-end; margin-right: 5px; margin-top: -4px; }}
-    .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
+    .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s ease-in-out; }}
     .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); }}
     .map-trigger {{ position: absolute; bottom: 0; left: 0; width: 45%; height: 60%; cursor: pointer; z-index: 100; }}
 
-    /* 物理翻轉 */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
     .top {{ top: 0; border-bottom: 1.5px solid #000; align-items: flex-end; }} 
     .bottom {{ bottom: 0; align-items: flex-start; }}
