@@ -15,34 +15,71 @@ CITIES = [
     {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00, "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1000&q=80"}
 ]
 
-# --- 2. 處理地圖跳出 (Dialog) ---
+# --- 2. 處理地圖跳出 (修復標記消失問題) ---
 @st.dialog("🌍 全球城市探索")
 def show_map_dialog():
-    m = folium.Map(location=[20, 0], zoom_start=1, tiles="CartoDB dark_matter", zoom_control=False)
+    # 使用 no_wrap=True 防止地圖無限左右循環導致標記消失
+    m = folium.Map(
+        location=[20, 0], 
+        zoom_start=1, 
+        tiles="CartoDB dark_matter", 
+        zoom_control=False,
+        no_wrap=True # 關鍵修復：限制地圖不重複捲動，標記就不會消失
+    )
     for c in CITIES:
-        folium.CircleMarker(location=[c["lat"], c["lon"]], radius=10, color="#00d4ff", fill=True, popup=c["zh"]).add_to(m)
+        folium.CircleMarker(
+            location=[c["lat"], c["lon"]], 
+            radius=10, color="#00d4ff", fill=True, 
+            fill_opacity=0.7, popup=c["zh"]
+        ).add_to(m)
     
-    # 這裡的 key 必須固定，確保選取後能觸發
     selected = st_folium(m, height=300, width=320, key="modal_map")
     if selected.get("last_object_clicked_popup"):
         name_zh = selected["last_object_clicked_popup"]
-        # 尋找該城市索引
         idx = next((i for i, item in enumerate(CITIES) if item["zh"] == name_zh), None)
         if idx is not None:
-            # 這裡透過 st.session_state 傳遞給前端 HTML
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 隱藏式控制按鈕 ---
+# --- 3. 隱藏控制按鈕 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
 
-# --- 4. 完美翻板 HTML 核心 ---
-# 將選定的索引傳給 JS
+# --- 4. 完美翻板 HTML 核心 (還原靈魂動畫) ---
 initial_idx = st.session_state.get('target_idx', 0)
 
 flip_clock_html = f"""
+<style>
+    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; }}
+    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 92vw; max-width: 500px; padding-top: 10px; }}
+    .app-title {{ color: #444; font-size: 0.7rem; letter-spacing: 8px; font-weight: bold; margin-bottom: 2px; }}
+    
+    .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
+    .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
+    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: 6vw; cursor: pointer; }}
+    .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; cursor: pointer; }}
+    .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
+    .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
+    @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.2; }} }}
+    
+    .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
+    .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%); }}
+
+    /* 物理翻轉核心邏輯 */
+    .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
+    .top {{ top: 0; border-bottom: 1.5px solid #000; align-items: flex-end; }} /* 物理切割線 */
+    .bottom {{ bottom: 0; align-items: flex-start; }}
+    .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; }}
+    .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
+    
+    /* 3D 葉片翻轉動畫 */
+    .leaf {{ position: absolute; top: 0; left: 0; width: 100%; height: 50%; z-index: 10; transform-origin: bottom; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
+    .leaf-front, .leaf-back {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; }}
+    .leaf-back {{ transform: rotateX(-180deg); }}
+    .flipping .leaf {{ transform: rotateX(-180deg); }}
+</style>
+
 <div class="app-container">
     <div class="app-title">𓃥 白 六 世 界 時 鐘</div>
     <div class="row-flex" onclick="nextCity()">
@@ -66,33 +103,6 @@ flip_clock_html = f"""
              onclick="window.parent.document.querySelector('button[kind=secondary]').click()"></div>
     </div>
 </div>
-
-<style>
-    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; overflow-x: hidden; }}
-    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 92vw; max-width: 500px; padding-top: 10px; }}
-    .app-title {{ color: #444; font-size: 0.7rem; letter-spacing: 8px; font-weight: bold; margin-bottom: 2px; }}
-    .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
-    .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
-    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: clamp(1rem, 6vw, 2rem); cursor: pointer; }}
-    .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; cursor: pointer; }}
-    .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
-    .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
-    @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.2; }} }}
-    
-    .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
-    .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%); }}
-
-    /* 物理翻轉核心 */
-    .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
-    .top {{ top: 0; border-bottom: 1px solid rgba(0,0,0,0.8); align-items: flex-end; }}
-    .bottom {{ bottom: 0; align-items: flex-start; }}
-    .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; }}
-    .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
-    .leaf {{ position: absolute; top: 0; left: 0; width: 100%; height: 50%; z-index: 10; transform-origin: bottom; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
-    .leaf-front, .leaf-back {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; }}
-    .leaf-back {{ transform: rotateX(-180deg); }}
-    .flipping .leaf {{ transform: rotateX(-180deg); }}
-</style>
 
 <script>
     const cities = {json.dumps(CITIES)};
@@ -159,4 +169,4 @@ flip_clock_html = f"""
 </script>
 """
 
-st.components.v1.html(flip_clock_html, height=800)
+st.components.v1.html(flip_clock_html, height=850)
