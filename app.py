@@ -2,17 +2,17 @@ import streamlit as st
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# API Key 與 城市清單（含照片搜尋關鍵字）
+# API Key 與 城市清單（含補齊的照片影像）
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
-    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "img": "https://images.unsplash.com/photo-1552235139-89c85b1c949c?w=800&q=80"},
-    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.unsplash.com/photo-1590234033669-e0935574510b?w=800&q=80"},
-    {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://images.unsplash.com/photo-1549487372-f67b45821c16?w=800&q=80"},
-    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1548919973-5cdf5916ad74?w=800&q=80"},
-    {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=800&q=80"},
-    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&q=80"},
-    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80"},
-    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80"}
+    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "img": "https://images.unsplash.com/photo-1552235139-89c85b1c949c?w=1000&q=80"},
+    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.unsplash.com/photo-1590234033669-e0935574510b?w=1000&q=80"},
+    {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://images.unsplash.com/photo-1616429352467-96940026e792?w=1000&q=80"},
+    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=1000&q=80"},
+    {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
+    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1000&q=80"},
+    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1000&q=80"},
+    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1000&q=80"}
 ]
 
 flip_clock_html = f"""
@@ -21,42 +21,48 @@ flip_clock_html = f"""
         background-color: #0e1117; margin: 0; 
         display: flex; justify-content: center; align-items: flex-start; 
         min-height: 100vh; font-family: "Microsoft JhengHei", sans-serif;
-        padding-top: 1vh; /* 畫面極致上移 */
+        padding-top: 0.5vh; /* 畫面推至極頂 */
     }}
     
-    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 12px; width: 98vw; max-width: 600px; }}
-    .app-title {{ color: #333; font-size: 0.75rem; letter-spacing: 6px; font-weight: bold; margin: 5px 0; }}
+    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 10px; width: 98vw; max-width: 600px; }}
+    .app-title {{ color: #444; font-size: 0.7rem; letter-spacing: 8px; font-weight: bold; margin: 2px 0; }}
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
     
-    /* 資訊板高度與字體 */
-    .info-card {{ flex: 1; height: 85px; font-size: clamp(1.4rem, 5.5vw, 2.2rem); cursor: pointer; }}
+    /* 資訊板：統一放大 */
+    .info-card {{ flex: 1; height: 90px; font-size: clamp(1.5rem, 6vw, 2.5rem); cursor: pointer; }}
 
-    /* 時間板 */
+    /* 時間板：加高 */
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; }}
-    .time-card {{ width: 22vw; max-width: 120px; height: 38vw; max-height: 180px; font-size: clamp(4.5rem, 28vw, 150px); }}
+    .time-card {{ width: 22vw; max-width: 125px; height: 42vw; max-height: 195px; font-size: clamp(5rem, 32vw, 160px); }}
     
-    /* 呼吸閃爍冒號 */
+    /* 亮點閃爍冒號 */
     .colon {{ 
-        color: #444; font-size: 3rem; font-weight: bold; margin-bottom: 10px;
-        animation: blink-fade 1s infinite alternate; 
+        color: #fff; /* 改為純白亮點 */
+        font-size: 4rem; font-weight: bold; margin-bottom: 15px;
+        text-shadow: 0 0 10px rgba(255,255,255,0.8);
+        animation: blink-strong 1s infinite steps(1); 
     }}
-    @keyframes blink-fade {{ from {{ opacity: 0.2; }} to {{ opacity: 1; }} }}
+    @keyframes blink-strong {{ 
+        0% {{ opacity: 1; }} 
+        50% {{ opacity: 0.05; }} 
+        100% {{ opacity: 1; }}
+    }}
 
-    /* 照片橫幅 */
+    /* 城市經典照片橫幅 */
     .city-photo-banner {{
-        width: 100%; height: 20vh; max-height: 180px;
-        border-radius: 8px; margin-top: 10px;
+        width: 100%; height: 25vh; max-height: 220px;
+        border-radius: 12px; margin-top: 5px;
         background-size: cover; background-position: center;
-        transition: background-image 0.8s ease-in-out;
-        border: 1px solid #222;
-        box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        transition: background-image 1s ease-in-out;
+        border: 1px solid #333;
+        box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
     }}
 
-    /* 物理遮蔽核心 */
+    /* --- 物理遮蔽模組核心 --- */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
-    .top {{ top: 0; border-bottom: 1px solid rgba(0,0,0,0.6); align-items: flex-end; }}
+    .top {{ top: 0; border-bottom: 1px solid rgba(0,0,0,0.8); align-items: flex-end; }}
     .bottom {{ bottom: 0; align-items: flex-start; }}
     .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }}
     .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
@@ -114,18 +120,26 @@ flip_clock_html = f"""
         try {{
             const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${{cityQ}}&appid=${{apiKey}}&units=metric`);
             const data = await res.json();
-            return {{ status: data.weather[0].main, temp: Math.round(data.main.temp_min)+"~"+Math.round(data.main.temp_max)+"°C" }};
+            const weatherDesc = data.weather[0].main;
+            const tempRange = Math.round(data.main.temp_min) + "~" + Math.round(data.main.temp_max) + "°C";
+            return {{ status: weatherDesc, temp: tempRange }};
         }} catch (e) {{ return {{ status: "Offline", temp: "--" }}; }}
     }}
 
     async function nextCity() {{
         curIdx = (curIdx + 1) % cities.length;
         const c = cities[curIdx];
+        
+        // 更新照片
         document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
+        
+        // 更新天氣
         const w = await fetchWeather(c.q);
         updateFlip('w_status', w.status, pW.status);
         updateFlip('w_temp', w.temp, pW.temp);
-        pW = w; tick();
+        pW = w;
+        
+        tick();
     }}
 
     function tick() {{
@@ -136,19 +150,21 @@ flip_clock_html = f"""
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
 
-        updateFlip('czh', c.zh, pC.zh); updateFlip('cen', c.en, pC.en);
+        updateFlip('czh', c.zh, pC.zh); 
+        updateFlip('cen', c.en, pC.en);
         updateFlip('h0', h[0], pT[0] ? pT[0][0] : "");
         updateFlip('h1', h[1], pT[0] ? pT[0][1] : "");
         updateFlip('m0', m[0], pT[1] ? pT[1][0] : "");
         updateFlip('m1', m[1], pT[1] ? pT[1][1] : "");
+        
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
-    // 初始化
-    document.getElementById('city-img').style.backgroundImage = `url('${{cities[0].img}}')`;
+    // 初始化第一個城市的天氣與影像
     setInterval(tick, 1000);
-    tick(); nextCity(); // 觸發第一次天氣與照片加載
+    tick();
+    nextCity(); 
 </script>
 """
 
-st.components.v1.html(flip_clock_html, height=850)
+st.components.v1.html(flip_clock_html, height=880)
