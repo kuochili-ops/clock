@@ -19,7 +19,6 @@ CITIES = [
 # --- 2. 處理地圖彈窗 ---
 @st.dialog("🌍 全球城市探索")
 def show_map_dialog():
-    # 限制地圖邊界防止標記消失
     m = folium.Map(
         location=[20, 0], zoom_start=1, 
         tiles="CartoDB dark_matter", zoom_control=False,
@@ -41,15 +40,16 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 隱藏式控制與翻板渲染 ---
+# --- 3. 隱藏式 Streamlit 控制 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
 
+# --- 4. 物理翻板與天氣標註渲染 ---
 initial_idx = st.session_state.get('target_idx', 0)
 
 flip_clock_html = f"""
-<div class="app-container" id="main-app">
+<div class="app-container">
     <div class="app-title">𓃥 白 六 世 界 時 鐘</div>
     
     <div id="click-zone">
@@ -65,10 +65,12 @@ flip_clock_html = f"""
             <div class="flip-card time-card" id="m1"></div>
         </div>
         <div class="row-flex">
-            <div class="flip-card info-card" id="w_status" style="background: #121212; color: #bbb;"></div>
-            <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #888;"></div>
+            <div class="flip-card info-card weather-card" id="w_status"></div>
+            <div class="flip-card info-card weather-card" id="w_temp"></div>
         </div>
     </div>
+
+    <div class="attribution">Data provided by OpenWeather</div>
 
     <div class="city-photo-banner" id="city-img">
         <div class="glass-vignette"></div>
@@ -77,24 +79,27 @@ flip_clock_html = f"""
 </div>
 
 <style>
-    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; font-family: sans-serif; }}
+    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; font-family: "Microsoft JhengHei", sans-serif; }}
     .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 92vw; max-width: 500px; padding-top: 10px; }}
     .app-title {{ color: #444; font-size: 0.75rem; letter-spacing: 6px; font-weight: bold; margin-bottom: 2px; }}
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
     .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: 6vw; display: flex; align-items: center; justify-content: center; }}
+    .weather-card {{ background: #121212 !important; color: #aaa !important; font-size: 5vw; }}
     
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; margin-top: 5px; }}
     .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
     .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
     @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.2; }} }}
     
+    .attribution {{ color: #333; font-size: 0.6rem; align-self: flex-end; margin-right: 5px; margin-top: -4px; letter-spacing: 1px; }}
+
     .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
     .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); }}
     .map-trigger {{ position: absolute; bottom: 0; left: 0; width: 45%; height: 60%; cursor: pointer; z-index: 100; }}
 
-    /* 物理翻轉視覺 */
+    /* 物理翻轉邏輯 */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
     .top {{ top: 0; border-bottom: 1.5px solid #000; align-items: flex-end; }} 
     .bottom {{ bottom: 0; align-items: flex-start; }}
@@ -163,14 +168,13 @@ flip_clock_html = f"""
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
-    // --- 事件綁定修復 ---
     document.getElementById('click-zone').addEventListener('click', () => {{
         curIdx = (curIdx + 1) % cities.length;
         renderCity();
     }});
 
     document.getElementById('map-btn').addEventListener('click', (e) => {{
-        e.stopPropagation(); // 阻止換城市
+        e.stopPropagation();
         window.parent.document.querySelector('button[kind=secondary]').click();
     }});
 
