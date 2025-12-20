@@ -1,14 +1,14 @@
 import streamlit as st
 
-st.set_page_config(page_title="城市翻板鐘修復版", layout="centered")
+st.set_page_config(page_title="全球時區翻板鐘", layout="centered")
 
-# 城市資料模組
+# 城市資料
 CITIES_DATA = [
-    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei"},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
-    {"zh": "倫 敦", "en": "London", "tz": "Europe/London"},
-    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo"},
-    {"zh": "紐 約", "en": "New York", "tz": "America/New_York"}
+    {"zh": "臺    北", "en": "Taipei", "tz": "Asia/Taipei"},
+    {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
+    {"zh": "倫    敦", "en": "London", "tz": "Europe/London"},
+    {"zh": "東    京", "en": "Tokyo", "tz": "Asia/Tokyo"},
+    {"zh": "紐    約", "en": "New York", "tz": "America/New_York"}
 ]
 
 flip_clock_module = f"""
@@ -17,58 +17,64 @@ flip_clock_module = f"""
         background-color: #0e1117; 
         display: flex; flex-direction: column;
         justify-content: center; align-items: center; 
-        min-height: 100vh; margin: 0; padding: 10px;
-        font-family: "Microsoft JhengHei", sans-serif;
+        min-height: 100vh; margin: 0; padding: 0;
+        overflow: hidden;
     }}
     
-    .container {{
-        display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;
+    .main-container {{
+        display: flex; flex-direction: column; align-items: center; 
+        gap: 30px; width: 100%; max-width: 500px;
     }}
 
+    /* 通用翻板容器 */
     .flip-card {{
         position: relative; background: #222;
-        font-weight: 900; color: #e0e0e0; text-align: center;
+        border-radius: 8px;
         perspective: 1000px;
     }}
 
-    /* 城市翻板優化 */
-    .city-row {{ display: flex; gap: 10px; width: 90vw; max-width: 500px; }}
-    .city-flip {{ flex: 1; height: 70px; font-size: 1.2rem; }}
+    /* 城市翻板 (上方兩塊) */
+    .city-row {{ display: flex; gap: 12px; width: 90vw; }}
+    .city-flip {{ flex: 1; height: 80px; }}
 
-    /* 時間翻板優化 */
+    /* 時間翻板 (下方四塊) */
     .clock-row {{ display: flex; gap: 8px; align-items: center; }}
-    .time-flip {{
-        width: 20vw; max-width: 85px; height: 28vw; max-height: 120px;
-        font-size: 18vw; max-font-size: 75px;
-    }}
+    .time-flip {{ width: 20vw; max-width: 85px; height: 28vw; max-height: 120px; }}
 
-    /* 核心修復：使用 Flexbox 確保文字上下半部完美對齊 */
+    /* 修復核心：上下半部結構 */
     .top, .bottom, .leaf-front, .leaf-back {{
         position: absolute; left: 0; width: 100%; height: 50%;
-        overflow: hidden; background: #222;
-        display: flex; justify-content: center; /* 水平置中 */
+        overflow: hidden; background: #262626;
+        display: flex; justify-content: center; align-items: center;
+        box-sizing: border-box;
     }}
 
     .top, .leaf-front {{
-        top: 0; border-radius: 6px 6px 0 0; border-bottom: 0.5px solid #000;
-        align-items: flex-end; /* 對齊底端（翻板中心） */
+        top: 0; border-radius: 8px 8px 0 0;
+        align-items: flex-end; /* 文字對齊中線底部 */
     }}
 
     .bottom, .leaf-back {{
-        bottom: 0; border-radius: 0 0 6px 6px;
-        align-items: flex-start; /* 對齊頂端（翻板中心） */
+        bottom: 0; border-radius: 0 0 8px 8px;
+        align-items: flex-start; /* 文字對齊中線頂部 */
     }}
 
-    /* 調整文字在上下半部的位置，解決截圖中的偏移問題 */
-    .top, .leaf-front {{ padding-bottom: 0; }}
-    .bottom, .leaf-back {{ padding-top: 0; }}
-
-    /* 確保文字不會因為 overflow 被切掉過多 */
-    .top, .bottom, .leaf-front, .leaf-back {{
-        height: 50%;
+    /* 解決文字殘缺：透過 span 控制文字溢出 */
+    .flip-card span {{
+        display: block; line-height: 0; 
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        font-weight: 900; color: #eee;
     }}
 
-    /* 翻轉動畫邏輯 */
+    .city-flip span {{ font-size: 1.2rem; }}
+    .time-flip span {{ font-size: 18vw; }}
+    @media (min-width: 600px) {{ .time-flip span {{ font-size: 80px; }} }}
+
+    /* 確保上下半部文字剛好切分 */
+    .top span, .leaf-front span {{ transform: translateY(0); padding-bottom: 0; }}
+    .bottom span, .leaf-back span {{ transform: translateY(0); padding-top: 0; }}
+
+    /* 翻轉動畫 */
     .leaf {{
         position: absolute; top: 0; left: 0; width: 100%; height: 50%;
         z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
@@ -79,11 +85,11 @@ flip_clock_module = f"""
     
     .hinge {{
         position: absolute; top: 50%; left: 0; width: 100%; height: 2px;
-        background: #000; z-index: 20; transform: translateY(-50%);
+        background: rgba(0,0,0,0.6); z-index: 20; transform: translateY(-50%);
     }}
 </style>
 
-<div class="container">
+<div class="main-container">
     <div class="city-row" onclick="nextCity()">
         <div class="flip-card city-flip" id="city-zh-card"></div>
         <div class="flip-card city-flip" id="city-en-card"></div>
@@ -92,7 +98,7 @@ flip_clock_module = f"""
     <div class="clock-row">
         <div class="flip-card time-flip" id="h0"></div>
         <div class="flip-card time-flip" id="h1"></div>
-        <div style="color:#666; font-size: 2rem; font-weight:bold;">:</div>
+        <div style="color:#444; font-size: 2rem; font-weight:bold;">:</div>
         <div class="flip-card time-flip" id="m0"></div>
         <div class="flip-card time-flip" id="m1"></div>
     </div>
@@ -108,8 +114,7 @@ flip_clock_module = f"""
         const el = document.getElementById(id);
         if (newVal === oldVal && el.innerHTML !== "") return;
 
-        // 將內容拆分為上半部與下半部，確保對齊
-        const content = `
+        el.innerHTML = `
             <div class="top"><span>${{newVal}}</span></div>
             <div class="bottom"><span>${{oldVal || newVal}}</span></div>
             <div class="leaf">
@@ -118,8 +123,6 @@ flip_clock_module = f"""
             </div>
             <div class="hinge"></div>
         `;
-        
-        el.innerHTML = content;
         el.classList.remove('flipping');
         void el.offsetWidth;
         el.classList.add('flipping');
@@ -158,5 +161,4 @@ flip_clock_module = f"""
 </script>
 """
 
-st.markdown("### 🌍 全球時光翻板 (修復版)")
-st.components.v1.html(flip_clock_module, height=450)
+st.components.v1.html(flip_clock_module, height=500)
