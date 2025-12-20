@@ -1,10 +1,10 @@
-#import streamlit as st
-#from flip_clock_lib import st_flip_clock
-
-#st.title("🌏 全球城市翻板鐘")
-#st_flip_clock()
-
 import streamlit as st
+from flip_clock_lib import st_flip_clock
+
+st.title("🌏 全球城市翻板鐘")
+st_flip_clock()
+
+'''import streamlit as st
 
 st.set_page_config(page_title="大寫中文翻板鐘", layout="centered")
 
@@ -188,9 +188,9 @@ flip_chinese_logic = """
     tick();
 </script>
 """
-
 st.title("🕰️ 繁體中文翻板鐘")
 st.markdown("已優化手機直式瀏覽，支援自動換行與縮放。")
 
 # 增加高度以容納手機端換行後的高度
 st.components.v1.html(flip_chinese_logic, height=450)
+'''
