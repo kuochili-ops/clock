@@ -1,86 +1,69 @@
 import streamlit as st
-import requests
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# 城市資料與 OpenWeather 搜尋關鍵字
+# API Key 與 城市清單（含照片搜尋關鍵字）
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
-    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei"},
-    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung"},
-    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo"},
-    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London"},
-    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York"},
-    {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles"},
-    {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris"}
+    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "img": "https://images.unsplash.com/photo-1552235139-89c85b1c949c?w=800&q=80"},
+    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.unsplash.com/photo-1590234033669-e0935574510b?w=800&q=80"},
+    {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://images.unsplash.com/photo-1549487372-f67b45821c16?w=800&q=80"},
+    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1548919973-5cdf5916ad74?w=800&q=80"},
+    {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=800&q=80"},
+    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&q=80"},
+    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80"},
+    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80"}
 ]
-
-# 天氣中文化對照表
-WEATHER_DESC = {
-    "clear sky": "天 氣 晴", "few clouds": "多 雲 晴", "scattered clouds": "多 雲",
-    "broken clouds": "多 雲 陰", "overcast clouds": "陰 天", "light rain": "微 雨",
-    "moderate rain": "有 雨", "heavy intensity rain": "大 雨", "thunderstorm": "雷 雨",
-    "snow": "下 雪", "mist": "薄 霧"
-}
 
 flip_clock_html = f"""
 <style>
     body {{ 
         background-color: #0e1117; margin: 0; 
         display: flex; justify-content: center; align-items: flex-start; 
-        min-height: 100vh; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-        padding-top: 3vh;
+        min-height: 100vh; font-family: "Microsoft JhengHei", sans-serif;
+        padding-top: 1vh; /* 畫面極致上移 */
     }}
     
-    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 15px; width: 98vw; max-width: 600px; }}
-    .app-title {{ color: #444; font-size: 0.8rem; letter-spacing: 6px; font-weight: bold; margin-bottom: 5px; }}
+    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 12px; width: 98vw; max-width: 600px; }}
+    .app-title {{ color: #333; font-size: 0.75rem; letter-spacing: 6px; font-weight: bold; margin: 5px 0; }}
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
+    .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
     
-    /* 統一分散對齊佈局 */
-    .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 10px; }}
+    /* 資訊板高度與字體 */
+    .info-card {{ flex: 1; height: 85px; font-size: clamp(1.4rem, 5.5vw, 2.2rem); cursor: pointer; }}
+
+    /* 時間板 */
+    .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; }}
+    .time-card {{ width: 22vw; max-width: 120px; height: 38vw; max-height: 180px; font-size: clamp(4.5rem, 28vw, 150px); }}
     
-    /* 城市與天氣板：字體盡量放大 */
-    .info-card {{ 
-        flex: 1; height: 95px; 
-        font-size: clamp(1.5rem, 6vw, 2.4rem); /* 字體極大化 */
-        cursor: pointer; 
+    /* 呼吸閃爍冒號 */
+    .colon {{ 
+        color: #444; font-size: 3rem; font-weight: bold; margin-bottom: 10px;
+        animation: blink-fade 1s infinite alternate; 
+    }}
+    @keyframes blink-fade {{ from {{ opacity: 0.2; }} to {{ opacity: 1; }} }}
+
+    /* 照片橫幅 */
+    .city-photo-banner {{
+        width: 100%; height: 20vh; max-height: 180px;
+        border-radius: 8px; margin-top: 10px;
+        background-size: cover; background-position: center;
+        transition: background-image 0.8s ease-in-out;
+        border: 1px solid #222;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
     }}
 
-    /* 時間板：加高且極大字 */
-    .time-row {{ display: flex; gap: 5px; align-items: center; justify-content: center; width: 100%; }}
-    .time-card {{ 
-        width: 22vw; max-width: 130px; 
-        height: 42vw; max-height: 200px; 
-        font-size: clamp(5rem, 30vw, 170px); 
-    }}
-    .colon {{ color: #333; font-size: 4rem; font-weight: bold; margin-bottom: 10px; }}
-
-    /* --- 物理遮蔽核心 --- */
-    .half {{
-        position: absolute; left: 0; width: 100%; height: 50%;
-        overflow: hidden; background: #1a1a1a; display: flex; justify-content: center;
-    }}
-    .top {{ top: 0; border-radius: 6px 6px 0 0; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.7); }}
-    .bottom {{ bottom: 0; border-radius: 0 0 6px 6px; align-items: flex-start; }}
-
-    .text-box {{
-        position: absolute; width: 100%; height: 200%;
-        display: flex; align-items: center; justify-content: center;
-        text-align: center; white-space: nowrap;
-    }}
-    .top .text-box {{ bottom: -100%; }}
-    .bottom .text-box {{ top: -100%; }}
-
-    .leaf {{
-        position: absolute; top: 0; left: 0; width: 100%; height: 50%;
-        z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }}
+    /* 物理遮蔽核心 */
+    .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
+    .top {{ top: 0; border-bottom: 1px solid rgba(0,0,0,0.6); align-items: flex-end; }}
+    .bottom {{ bottom: 0; align-items: flex-start; }}
+    .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }}
+    .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
+    .leaf {{ position: absolute; top: 0; left: 0; width: 100%; height: 50%; z-index: 10; transform-origin: bottom; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
     .leaf-front, .leaf-back {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; }}
     .leaf-back {{ transform: rotateX(-180deg); }}
     .flipping .leaf {{ transform: rotateX(-180deg); }}
-    .hinge {{ position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; }}
 </style>
 
 <div class="app-container">
@@ -100,19 +83,18 @@ flip_clock_html = f"""
     </div>
 
     <div class="row-flex">
-        <div class="flip-card info-card" id="w_status" style="background: #121212; color: #ddd;"></div>
-        <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #ccc;"></div>
+        <div class="flip-card info-card" id="w_status" style="background: #121212; color: #aaa;"></div>
+        <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #888;"></div>
     </div>
+
+    <div class="city-photo-banner" id="city-img"></div>
 </div>
 
 <script>
     const cities = {CITIES};
     const apiKey = "{API_KEY}";
-    const weatherMap = {WEATHER_DESC};
     let curIdx = 0;
-    let pT = ["", ""];
-    let pC = {{zh: "", en: ""}};
-    let pW = {{status: "加載中", temp: "--~--°C"}};
+    let pT = ["", ""]; let pC = {{zh: "", en: ""}}; let pW = {{status: "Loading", temp: ""}};
 
     function updateFlip(id, newVal, oldVal) {{
         const el = document.getElementById(id);
@@ -124,64 +106,49 @@ flip_clock_html = f"""
                 <div class="leaf-front half top"><div class="text-box">${{oldVal || newVal}}</div></div>
                 <div class="leaf-back half bottom"><div class="text-box">${{newVal}}</div></div>
             </div>
-            <div class="hinge"></div>
         `;
-        el.classList.remove('flipping');
-        void el.offsetWidth;
-        el.classList.add('flipping');
+        el.classList.remove('flipping'); void el.offsetWidth; el.classList.add('flipping');
     }}
 
     async function fetchWeather(cityQ) {{
         try {{
-            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${{cityQ}}&appid=${{apiKey}}&units=metric&lang=zh_tw`);
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${{cityQ}}&appid=${{apiKey}}&units=metric`);
             const data = await res.json();
-            const desc = weatherMap[data.weather[0].description] || data.weather[0].description;
-            const temp = Math.round(data.main.temp_min) + "~" + Math.round(data.main.temp_max) + "°C";
-            return {{ status: desc, temp: temp }};
-        }} catch (e) {{
-            return {{ status: "連線失敗", temp: "誤差中" }};
-        }}
+            return {{ status: data.weather[0].main, temp: Math.round(data.main.temp_min)+"~"+Math.round(data.main.temp_max)+"°C" }};
+        }} catch (e) {{ return {{ status: "Offline", temp: "--" }}; }}
     }}
 
     async function nextCity() {{
         curIdx = (curIdx + 1) % cities.length;
-        const newWeather = await fetchWeather(cities[curIdx].q);
-        updateFlip('w_status', newWeather.status, pW.status);
-        updateFlip('w_temp', newWeather.temp, pW.temp);
-        pW = newWeather;
-        tick();
+        const c = cities[curIdx];
+        document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
+        const w = await fetchWeather(c.q);
+        updateFlip('w_status', w.status, pW.status);
+        updateFlip('w_temp', w.temp, pW.temp);
+        pW = w; tick();
     }}
 
     function tick() {{
         const c = cities[curIdx];
         const now = new Date();
-        const f = new Intl.DateTimeFormat('en-US', {{
-            timeZone: c.tz, hour12: false, hour: '2-digit', minute: '2-digit'
-        }});
+        const f = new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour12: false, hour: '2-digit', minute: '2-digit' }});
         const parts = f.formatToParts(now);
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
 
-        updateFlip('czh', c.zh, pC.zh);
-        updateFlip('cen', c.en, pC.en);
+        updateFlip('czh', c.zh, pC.zh); updateFlip('cen', c.en, pC.en);
         updateFlip('h0', h[0], pT[0] ? pT[0][0] : "");
         updateFlip('h1', h[1], pT[0] ? pT[0][1] : "");
         updateFlip('m0', m[0], pT[1] ? pT[1][0] : "");
         updateFlip('m1', m[1], pT[1] ? pT[1][1] : "");
-
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
-    // 初始化天氣
-    fetchWeather(cities[0].q).then(w => {{
-        updateFlip('w_status', w.status, "");
-        updateFlip('w_temp', w.temp, "");
-        pW = w;
-    }});
-
+    // 初始化
+    document.getElementById('city-img').style.backgroundImage = `url('${{cities[0].img}}')`;
     setInterval(tick, 1000);
-    tick();
+    tick(); nextCity(); // 觸發第一次天氣與照片加載
 </script>
 """
 
-st.components.v1.html(flip_clock_html, height=800)
+st.components.v1.html(flip_clock_html, height=850)
