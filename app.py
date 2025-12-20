@@ -42,20 +42,24 @@ flip_clock_html = f"""
     }}
     @keyframes blink-strong {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.1; }} 100% {{ opacity: 1; }} }}
 
-    /* 玻璃擬態影像橫幅 */
+    /* 焦點霧化影像橫幅 */
     .city-photo-banner {{
         position: relative; width: 100%; height: 32vh; max-height: 280px;
         border-radius: 15px; margin-top: 5px;
         background-size: cover; background-position: center;
         transition: background-image 1s ease-in-out;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         overflow: hidden;
     }}
-    .glass-overlay {{
+    
+    /* 四邊霧化遮罩核心 */
+    .glass-vignette {{
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.4));
-        backdrop-filter: blur(2px); /* 輕微模糊增加質感 */
-        box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+        backdrop-filter: blur(8px); /* 霧化強度 */
+        /* 徑向漸變遮罩：中央透明(100%清晰)，周邊不透明(觸發blur) */
+        -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%);
+        mask-image: radial-gradient(circle, transparent 40%, black 100%);
+        background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%);
     }}
 
     /* 物理遮蔽模組核心 */
@@ -88,7 +92,7 @@ flip_clock_html = f"""
         <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #888;"></div>
     </div>
     <div class="city-photo-banner" id="city-img">
-        <div class="glass-overlay"></div>
+        <div class="glass-vignette"></div>
     </div>
 </div>
 
@@ -125,11 +129,8 @@ flip_clock_html = f"""
         curIdx = (curIdx + 1) % cities.length;
         const c = cities[curIdx];
         document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
-        
-        // 取得該城市目前小時判定日夜
         const now = new Date();
         const hour = parseInt(new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour: '2-digit', hour12: false }}).format(now));
-        
         const w = await fetchWeather(c.q, hour);
         updateFlip('w_status', w.status, pW.status);
         updateFlip('w_temp', w.temp, pW.temp);
@@ -143,7 +144,6 @@ flip_clock_html = f"""
         const parts = f.formatToParts(now);
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
-
         updateFlip('czh', c.zh, pC.zh); updateFlip('cen', c.en, pC.en);
         updateFlip('h0', h[0], pT[0] ? pT[0][0] : "");
         updateFlip('h1', h[1], pT[0] ? pT[0][1] : "");
@@ -154,9 +154,7 @@ flip_clock_html = f"""
 
     setInterval(tick, 1000); tick();
     document.getElementById('city-img').style.backgroundImage = `url('${{cities[0].img}}')`;
-    // 初始化首個城市天氣
-    const initH = new Date().getHours();
-    fetchWeather(cities[0].q, initH).then(w => {{
+    fetchWeather(cities[0].q, new Date().getHours()).then(w => {{
         updateFlip('w_status', w.status, "");
         updateFlip('w_temp', w.temp, "");
         pW = w;
