@@ -16,17 +16,23 @@ CITIES = [
     {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00, "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1000&q=80"}
 ]
 
-# --- 2. 處理地圖彈窗 (修復標記消失問題) ---
+# --- 2. 處理地圖彈窗 (強效邊界限制) ---
 @st.dialog("🌍 全球城市探索")
 def show_map_dialog():
-    # 限制地圖不重複捲動 (worldCopyJump) 可以讓標記在循環時依然可見
+    # 設定滑動邊界，防止滑出世界版圖
+    max_bounds = [(-85, -180), (85, 180)]
+    
     m = folium.Map(
         location=[20, 0], 
         zoom_start=1, 
         tiles="CartoDB dark_matter", 
         zoom_control=False,
-        no_wrap=True # 防止地圖重複導致標記在「分身版圖」消失
+        no_wrap=True,
+        max_bounds=True, # 啟用邊界限制
+        min_lat=-60, max_lat=80, # 限制緯度移動
+        min_lon=-170, max_lon=170 # 限制經度移動，防止標記消失
     )
+    
     for c in CITIES:
         folium.CircleMarker(
             location=[c["lat"], c["lon"]], 
@@ -42,12 +48,12 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 隱藏式邏輯控制 ---
+# --- 3. 隱藏式 Streamlit 控制 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
 
-# --- 4. 物理翻板 HTML 核心 (還原靈魂 3D 動畫) ---
+# --- 4. 物理翻板渲染 ---
 initial_idx = st.session_state.get('target_idx', 0)
 
 flip_clock_html = f"""
@@ -58,11 +64,11 @@ flip_clock_html = f"""
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
-    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: clamp(1rem, 6vw, 2.2rem); cursor: pointer; }}
+    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: 6vw; cursor: pointer; }}
     
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; cursor: pointer; }}
-    .time-card {{ width: 21vw; height: 40vw; max-height: 200px; font-size: 28vw; }}
-    .colon {{ color: #fff; font-size: 10vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
+    .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
+    .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
     @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.2; }} }}
     
     .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
@@ -135,17 +141,11 @@ flip_clock_html = f"""
         }} catch (e) {{ return {{ status: "Offline", temp: "--" }}; }}
     }}
 
-    async function nextCity() {{
-        curIdx = (curIdx + 1) % cities.length;
-        renderCity();
-    }}
-
     async function renderCity() {{
         const c = cities[curIdx];
         document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
         const now = new Date();
-        const f = new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour12: false, hour: '2-digit' }});
-        const hour = parseInt(f.format(now));
+        const hour = parseInt(new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour: '2-digit', hour12: false }}).format(now));
         const w = await fetchWeather(c.q, hour);
         updateFlip('w_status', w.status, pW.status);
         updateFlip('w_temp', w.temp, pW.temp);
@@ -169,6 +169,7 @@ flip_clock_html = f"""
 
     setInterval(tick, 1000); 
     renderCity();
+    window.addEventListener('click', () => {{ nextCity(); }}, {{ once: false, capture: true }}); // 增加全域點擊備援
 </script>
 """
 
