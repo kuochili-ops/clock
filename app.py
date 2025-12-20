@@ -2,12 +2,12 @@ import streamlit as st
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# API Key 與 城市清單（含補齊的照片影像）
+# API Key 與 城市清單（更新洛杉磯影像連結）
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "img": "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_2700,h_1800/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/wgnjys095pdwp1qjvh6k/%E5%8F%B0%E5%8C%97%EF%BD%9C%E7%B6%93%E5%85%B8%E4%B8%80%E6%97%A5%E9%81%8A-Klook%E5%AE%A2%E8%B7%AF.jpg"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.chinatimes.com/newsphoto/2023-01-06/656/20230106004870.jpg"},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://images.unsplash.com/photo-1506197348621-c481810b8292?w=1000&q=80"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/HollywoodSign.jpg/1200px-HollywoodSign.jpg"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
     {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=1000&q=80"},
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
@@ -22,22 +22,18 @@ flip_clock_html = f"""
         background-color: #0e1117; margin: 0; 
         display: flex; justify-content: center; align-items: flex-start; 
         min-height: 100vh; font-family: "Microsoft JhengHei", sans-serif;
-        padding-top: 1vh;
+        padding-top: 0.5vh;
     }}
     .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 98vw; max-width: 600px; }}
     .app-title {{ color: #444; font-size: 0.7rem; letter-spacing: 8px; font-weight: bold; margin-bottom: 2px; }}
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
-    
-    /* 資訊板：統一放大且分散對齊 */
     .info-card {{ flex: 1; height: 85px; font-size: clamp(1.4rem, 5.8vw, 2.4rem); cursor: pointer; }}
 
-    /* 時間板：加高 */
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; }}
     .time-card {{ width: 22vw; max-width: 125px; height: 42vw; max-height: 195px; font-size: clamp(5rem, 30vw, 160px); }}
     
-    /* 亮點閃爍冒號 */
     .colon {{ 
         color: #fff; font-size: 4rem; font-weight: bold; margin-bottom: 15px;
         text-shadow: 0 0 15px rgba(255,255,255,1);
@@ -45,7 +41,6 @@ flip_clock_html = f"""
     }}
     @keyframes blink-strong {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.1; }} 100% {{ opacity: 1; }} }}
 
-    /* 照片橫幅 */
     .city-photo-banner {{
         width: 100%; height: 30vh; max-height: 260px;
         border-radius: 12px; margin-top: 5px;
@@ -69,12 +64,10 @@ flip_clock_html = f"""
 
 <div class="app-container">
     <div class="app-title">𓃥 白 六 世 界 時 鐘</div>
-
     <div class="row-flex" onclick="nextCity()">
         <div class="flip-card info-card" id="czh"></div>
         <div class="flip-card info-card" id="cen"></div>
     </div>
-
     <div class="time-row">
         <div class="flip-card time-card" id="h0"></div>
         <div class="flip-card time-card" id="h1"></div>
@@ -82,12 +75,10 @@ flip_clock_html = f"""
         <div class="flip-card time-card" id="m0"></div>
         <div class="flip-card time-card" id="m1"></div>
     </div>
-
     <div class="row-flex">
         <div class="flip-card info-card" id="w_status" style="background: #121212; color: #bbb;"></div>
         <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #888;"></div>
     </div>
-
     <div class="city-photo-banner" id="city-img"></div>
 </div>
 
@@ -126,8 +117,7 @@ flip_clock_html = f"""
         const w = await fetchWeather(c.q);
         updateFlip('w_status', w.status, pW.status);
         updateFlip('w_temp', w.temp, pW.temp);
-        pW = w;
-        tick();
+        pW = w; tick();
     }}
 
     function tick() {{
@@ -137,7 +127,6 @@ flip_clock_html = f"""
         const parts = f.formatToParts(now);
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
-
         updateFlip('czh', c.zh, pC.zh); updateFlip('cen', c.en, pC.en);
         updateFlip('h0', h[0], pT[0] ? pT[0][0] : "");
         updateFlip('h1', h[1], pT[0] ? pT[0][1] : "");
@@ -146,8 +135,7 @@ flip_clock_html = f"""
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
-    setInterval(tick, 1000);
-    tick();
+    setInterval(tick, 1000); tick();
     document.getElementById('city-img').style.backgroundImage = `url('${{cities[0].img}}')`;
     fetchWeather(cities[0].q).then(w => {{
         updateFlip('w_status', w.status, "");
@@ -157,4 +145,4 @@ flip_clock_html = f"""
 </script>
 """
 
-st.components.v1.html(flip_clock_html, height=900)
+st.components.v1.html(flip_clock_html, height=920)
