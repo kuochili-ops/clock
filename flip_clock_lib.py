@@ -2,32 +2,30 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 def st_flip_clock():
-    """
-    1. 強制重繪版：切換城市時直接清空 DOM，解決時區不動的 Bug。
-    2. 物理切割：移除 line-height，改用 translateY 對齊，解決殘影。
-    3. 極簡佈局：移除所有 unit-group 與 label，移除多餘板塊。
-    """
+    # 這裡的 HTML 代碼做了大幅度簡化
     flip_html = """
     <style>
         body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 0; overflow: hidden; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; }
 
+        /* 城市板 */
         .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; }
         .city-card { position: relative; width: 44vw; max-width: 170px; height: 60px; font-family: sans-serif; font-size: 24px; font-weight: 900; color: #fff; text-align: center; }
 
+        /* 時間板：徹底移除 label 與 unit-group，只剩 4 個數字 */
         .clock { display: flex; gap: 6px; perspective: 1000px; justify-content: center; align-items: center; }
         .flip-card { position: relative; width: 22vw; max-width: 85px; height: 110px; font-family: "Arial Black", sans-serif; font-size: 80px; font-weight: 900; color: #e0e0e0; text-align: center; }
 
-        /* 物理切割與對齊 */
+        /* 物理切割：確保無殘影 */
         .top, .bottom, .leaf-front, .leaf-back {
             position: absolute; left: 0; width: 100%; height: 50%;
             overflow: hidden; background: #222; box-sizing: border-box;
             display: flex; justify-content: center;
         }
-        .top, .leaf-front { top: 0; border-radius: 6px 6px 0 0; border-bottom: 0.5px solid #000; align-items: flex-end; }
+        .top, .leaf-front { top: 0; border-radius: 6px 6px 0 0; border-bottom: 1px solid #000; align-items: flex-end; }
         .bottom, .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; align-items: flex-start; }
         
-        /* 移除 line-height 偏移，改用位移確保文字在中央切開 */
+        /* 物理偏移對齊文字 */
         .top span, .leaf-front span { transform: translateY(50%); }
         .bottom span, .leaf-back span { transform: translateY(-50%); }
 
@@ -38,11 +36,11 @@ def st_flip_clock():
     </style>
 
     <div class="container">
-        <div class="city-row" id="city_trigger">
+        <div class="city-row" id="click_area">
             <div class="city-card" id="city-cn"></div>
             <div class="city-card" id="city-en"></div>
         </div>
-        <div class="clock" id="clock_shell">
+        <div class="clock">
             <div class="flip-card" id="d0"></div>
             <div class="flip-card" id="d1"></div>
             <div style="font-size: 40px; color: #444; font-weight: bold; margin: 0 4px;">:</div>
@@ -60,44 +58,31 @@ def st_flip_clock():
             { cn: "洛 杉 磯", en: "Los Angeles", offset: -8 }
         ];
 
-        let currentCityIdx = 0, prevTimeStr = "", prevCity = { cn: "", en: "" };
+        let cityIdx = 0, prevTime = "", prevCity = { cn: "", en: "" };
 
         function updateFlip(id, newVal, oldVal) {
             const el = document.getElementById(id);
-            if (!el) return;
-            // 如果值相同且不是初始狀態，不翻轉
-            if (newVal === oldVal && el.innerHTML !== "") return;
-            
-            el.innerHTML = `
-                <div class="top"><span>${newVal}</span></div>
-                <div class="bottom"><span>${oldVal}</span></div>
-                <div class="leaf">
-                    <div class="leaf-front"><span>${oldVal}</span></div>
-                    <div class="leaf-back"><span>${newVal}</span></div>
-                </div>
-                <div class="hinge"></div>
-            `;
+            if (!el || (newVal === oldVal && el.innerHTML !== "")) return;
+            el.innerHTML = `<div class="top"><span>${newVal}</span></div><div class="bottom"><span>${oldVal}</span></div><div class="leaf"><div class="leaf-front"><span>${oldVal}</span></div><div class="leaf-back"><span>${newVal}</span></div></div><div class="hinge"></div>`;
             el.classList.remove('flipping');
             void el.offsetWidth;
             el.classList.add('flipping');
         }
 
-        // 強制切換函數
-        document.getElementById('city_trigger').onclick = function() {
-            currentCityIdx = (currentCityIdx + 1) % cities.length;
-            prevTimeStr = ""; // 關鍵：清空狀態，強制重繪
+        document.getElementById('click_area').onclick = () => {
+            cityIdx = (cityIdx + 1) % cities.length;
+            prevTime = ""; // 強制刷新
             tick();
         };
 
         function tick() {
-            const city = cities[currentCityIdx];
-            // 強制 UTC 偏移量計算，無視系統時區
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const target = new Date(utc + (3600000 * city.offset));
-            
-            const h = target.getHours().toString().padStart(2, '0');
-            const m = target.getMinutes().toString().padStart(2, '0');
+            const city = cities[cityIdx];
+            // 絕對時區計算：避免設備 locale 干擾
+            const d = new Date();
+            const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+            const target = new Date(utc + (city.offset * 3600000));
+            const h = String(target.getHours()).padStart(2, '0');
+            const m = String(target.getMinutes()).padStart(2, '0');
             const timeStr = h + m;
 
             updateFlip("city-cn", city.cn, prevCity.cn || city.cn);
@@ -106,15 +91,14 @@ def st_flip_clock():
 
             for (let i = 0; i < 4; i++) {
                 const nv = timeStr[i];
-                const ov = prevTimeStr[i] || nv;
-                if (nv !== ov || prevTimeStr === "") updateFlip(`d${i}`, nv, ov);
+                const ov = prevTime[i] || nv;
+                if (nv !== ov || prevTime === "") updateFlip(`d${i}`, nv, ov);
             }
-            prevTimeStr = timeStr;
+            prevTime = timeStr;
         }
-
-        setInterval(tick, 1000);
-        tick();
+        setInterval(tick, 1000); tick();
     </script>
     """
-    # 稍微調大 height 確保 iframe 內部不會出現滾動條
-    return components.html(flip_html, height=420)
+    # 修正：給予唯一的 key 避免 Streamlit 緩存舊的 iframe
+    import time
+    return components.html(flip_html, height=400, key=f"flip_clock_{time.time()}")
