@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 import folium
 
-# --- 1. 核心資料：維持您影片中的預設城市 ---
+# --- 1. 核心資料 ---
 if 'idx' not in st.session_state: st.session_state.idx = 0
 CITIES = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "lat": 25.03, "lon": 121.56, "img": "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_2700,h_1800/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/wgnjys095pdwp1qjvh6k/%E5%8F%B0%E5%8C%97%EF%BD%9C%E7%B6%93%E5%85%B8%E4%B8%80%E6%97%A5%E9%81%8A-Klook%E5%AE%A2%E8%B7%AF.jpg"},
@@ -10,8 +10,8 @@ CITIES = [
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "lat": 35.68, "lon": 139.69, "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1000&q=80"}
 ]
 
-# --- 2. 地圖對話框 (只有點擊照片左下角才會跳出) ---
-@st.dialog("🌍 探索世界")
+# --- 2. 地圖對話框 ---
+@st.dialog("🌍 全球探索")
 def show_map_dialog():
     m = folium.Map(location=[20, 0], zoom_start=1, tiles="CartoDB dark_matter", zoom_control=False)
     for c in CITIES:
@@ -24,35 +24,48 @@ def show_map_dialog():
             st.session_state.idx = new_idx
             st.rerun()
 
-# --- 3. 隱藏式邏輯觸發器 ---
+# --- 3. 隱形按鈕與切換邏輯 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 
-# 用來處理點擊翻板切換城市
-if st.button("NEXT", key="next_trigger"):
+if st.button("NEXT", key="n"):
     st.session_state.idx = (st.session_state.idx + 1) % len(CITIES)
     st.rerun()
 
-# 用來處理地圖彈出
-if st.button("MAP", key="map_trigger"):
+if st.button("MAP", key="m"):
     show_map_dialog()
 
-# --- 4. 原始物理翻板 HTML ---
+# --- 4. 恢復「物理遮蔽」HTML 結構 ---
 curr = CITIES[st.session_state.idx]
 html_code = f"""
-<div id="clock-app" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+<div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
     <style>
+        /* 核心物理遮蔽樣式 - 完全恢復您之前的完美版本 */
         .row-flex {{ display: flex; width: 92vw; justify-content: space-between; gap: 8px; }}
-        .flip-card {{ background: #1a1a1a; border-radius: 8px; color: white; font-weight: 900; position: relative; overflow: hidden; }}
+        .flip-card {{ 
+            position: relative; background: #1a1a1a; border-radius: 8px; 
+            color: white; font-weight: 900; overflow: hidden; 
+        }}
         .info-card {{ flex: 1; height: 18vw; font-size: 6.5vw; display: flex; align-items: center; justify-content: center; cursor: pointer; }}
-        .time-row {{ display: flex; gap: 4px; align-items: center; cursor: pointer; }}
-        .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
         
-        /* 物理遮蔽核心 */
-        .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
+        .time-row {{ display: flex; gap: 4px; align-items: center; cursor: pointer; margin-top: 10px; }}
+        .time-card {{ width: 21vw; height: 35vw; }}
+
+        /* 物理遮蔽：切割上半部與下半部 */
+        .half {{ 
+            position: absolute; left: 0; width: 100%; height: 50%; 
+            overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; 
+        }}
         .top {{ top: 0; border-bottom: 1px solid #000; align-items: flex-end; }}
         .bottom {{ bottom: 0; align-items: flex-start; }}
-        .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; }}
-        .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
+
+        /* 文字容器位移：關鍵靈魂 */
+        .text-box {{ 
+            position: absolute; width: 100%; height: 200%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 26vw; 
+        }}
+        .top .text-box {{ bottom: -100%; }}
+        .bottom .text-box {{ top: -100%; }}
 
         .photo-banner {{ 
             width: 92vw; height: 50vw; border-radius: 15px; margin-top: 10px;
@@ -70,10 +83,10 @@ html_code = f"""
             <div class="flip-card info-card">{curr['zh']}</div>
             <div class="flip-card info-card">{curr['en']}</div>
         </div>
-        <div class="time-row" style="margin-top: 10px;">
+        <div class="time-row">
             <div class="flip-card time-card" id="h0"></div>
             <div class="flip-card time-card" id="h1"></div>
-            <div style="font-size: 10vw; color: white; padding-bottom: 2vw;">:</div>
+            <div style="font-size: 10vw; color: white;">:</div>
             <div class="flip-card time-card" id="m0"></div>
             <div class="flip-card time-card" id="m1"></div>
         </div>
@@ -86,14 +99,17 @@ html_code = f"""
 </div>
 
 <script>
-    function updateVal(id, val) {{
-        document.getElementById(id).innerHTML = `<div class="half top"><div class="text-box">${{val}}</div></div><div class="half bottom"><div class="text-box">${{val}}</div></div>`;
+    function setFlip(id, val) {{
+        document.getElementById(id).innerHTML = `
+            <div class="half top"><div class="text-box">${{val}}</div></div>
+            <div class="half bottom"><div class="text-box">${{val}}</div></div>
+        `;
     }}
     function tick() {{
         const now = new Date(new Date().toLocaleString("en-US", {{timeZone: "{curr['tz']}"}}));
         const h = String(now.getHours()).padStart(2, '0');
         const m = String(now.getMinutes()).padStart(2, '0');
-        updateVal('h0', h[0]); updateVal('h1', h[1]); updateVal('m0', m[0]); updateVal('m1', m[1]);
+        setFlip('h0', h[0]); setFlip('h1', h[1]); setFlip('m0', m[0]); setFlip('m1', m[1]);
     }}
     setInterval(tick, 1000); tick();
 </script>
