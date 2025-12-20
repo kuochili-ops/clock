@@ -16,23 +16,16 @@ CITIES = [
     {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00, "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1000&q=80"}
 ]
 
-# --- 2. 處理地圖彈窗 (強效邊界限制) ---
+# --- 2. 處理地圖彈窗 ---
 @st.dialog("🌍 全球城市探索")
 def show_map_dialog():
-    # 設定滑動邊界，防止滑出世界版圖
-    max_bounds = [(-85, -180), (85, 180)]
-    
+    # 限制地圖邊界防止標記消失
     m = folium.Map(
-        location=[20, 0], 
-        zoom_start=1, 
-        tiles="CartoDB dark_matter", 
-        zoom_control=False,
-        no_wrap=True,
-        max_bounds=True, # 啟用邊界限制
-        min_lat=-60, max_lat=80, # 限制緯度移動
-        min_lon=-170, max_lon=170 # 限制經度移動，防止標記消失
+        location=[20, 0], zoom_start=1, 
+        tiles="CartoDB dark_matter", zoom_control=False,
+        no_wrap=True, max_bounds=True,
+        min_lat=-60, max_lat=80, min_lon=-170, max_lon=170
     )
-    
     for c in CITIES:
         folium.CircleMarker(
             location=[c["lat"], c["lon"]], 
@@ -48,69 +41,71 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 隱藏式 Streamlit 控制 ---
+# --- 3. 隱藏式控制與翻板渲染 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
 
-# --- 4. 物理翻板渲染 ---
 initial_idx = st.session_state.get('target_idx', 0)
 
 flip_clock_html = f"""
+<div class="app-container" id="main-app">
+    <div class="app-title">𓃥 白 六 世 界 時 鐘</div>
+    
+    <div id="click-zone">
+        <div class="row-flex">
+            <div class="flip-card info-card" id="czh"></div>
+            <div class="flip-card info-card" id="cen"></div>
+        </div>
+        <div class="time-row">
+            <div class="flip-card time-card" id="h0"></div>
+            <div class="flip-card time-card" id="h1"></div>
+            <div class="colon">:</div>
+            <div class="flip-card time-card" id="m0"></div>
+            <div class="flip-card time-card" id="m1"></div>
+        </div>
+        <div class="row-flex">
+            <div class="flip-card info-card" id="w_status" style="background: #121212; color: #bbb;"></div>
+            <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #888;"></div>
+        </div>
+    </div>
+
+    <div class="city-photo-banner" id="city-img">
+        <div class="glass-vignette"></div>
+        <div class="map-trigger" id="map-btn"></div>
+    </div>
+</div>
+
 <style>
-    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; }}
+    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; font-family: sans-serif; }}
     .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 92vw; max-width: 500px; padding-top: 10px; }}
     .app-title {{ color: #444; font-size: 0.75rem; letter-spacing: 6px; font-weight: bold; margin-bottom: 2px; }}
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
-    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: 6vw; cursor: pointer; }}
+    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: 6vw; display: flex; align-items: center; justify-content: center; }}
     
-    .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; cursor: pointer; }}
+    .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; margin-top: 5px; }}
     .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
     .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
     @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.2; }} }}
     
     .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
-    .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%); }}
+    .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); }}
+    .map-trigger {{ position: absolute; bottom: 0; left: 0; width: 45%; height: 60%; cursor: pointer; z-index: 100; }}
 
-    /* 物理翻轉視覺核心 */
+    /* 物理翻轉視覺 */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
     .top {{ top: 0; border-bottom: 1.5px solid #000; align-items: flex-end; }} 
     .bottom {{ bottom: 0; align-items: flex-start; }}
     .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; }}
     .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
     
-    /* 3D 翻轉葉片效果 */
     .leaf {{ position: absolute; top: 0; left: 0; width: 100%; height: 50%; z-index: 10; transform-origin: bottom; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
     .leaf-front, .leaf-back {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; }}
     .leaf-back {{ transform: rotateX(-180deg); }}
     .flipping .leaf {{ transform: rotateX(-180deg); }}
 </style>
-
-<div class="app-container">
-    <div class="app-title">𓃥 白 六 世 界 時 鐘</div>
-    <div class="row-flex" onclick="nextCity()">
-        <div class="flip-card info-card" id="czh"></div>
-        <div class="flip-card info-card" id="cen"></div>
-    </div>
-    <div class="time-row" onclick="nextCity()">
-        <div class="flip-card time-card" id="h0"></div>
-        <div class="flip-card time-card" id="h1"></div>
-        <div class="colon">:</div>
-        <div class="flip-card time-card" id="m0"></div>
-        <div class="flip-card time-card" id="m1"></div>
-    </div>
-    <div class="row-flex">
-        <div class="flip-card info-card" id="w_status" style="background: #121212; color: #bbb;"></div>
-        <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #888;"></div>
-    </div>
-    <div class="city-photo-banner" id="city-img">
-        <div class="glass-vignette"></div>
-        <div style="position:absolute; bottom:0; left:0; width:45%; height:60%; cursor:pointer; z-index:100;" 
-             onclick="window.parent.document.querySelector('button[kind=secondary]').click()"></div>
-    </div>
-</div>
 
 <script>
     const cities = {json.dumps(CITIES)};
@@ -145,7 +140,8 @@ flip_clock_html = f"""
         const c = cities[curIdx];
         document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
         const now = new Date();
-        const hour = parseInt(new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour: '2-digit', hour12: false }}).format(now));
+        const f = new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour12: false, hour: '2-digit' }});
+        const hour = parseInt(f.format(now));
         const w = await fetchWeather(c.q, hour);
         updateFlip('w_status', w.status, pW.status);
         updateFlip('w_temp', w.temp, pW.temp);
@@ -167,9 +163,19 @@ flip_clock_html = f"""
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
+    // --- 事件綁定修復 ---
+    document.getElementById('click-zone').addEventListener('click', () => {{
+        curIdx = (curIdx + 1) % cities.length;
+        renderCity();
+    }});
+
+    document.getElementById('map-btn').addEventListener('click', (e) => {{
+        e.stopPropagation(); // 阻止換城市
+        window.parent.document.querySelector('button[kind=secondary]').click();
+    }});
+
     setInterval(tick, 1000); 
     renderCity();
-    window.addEventListener('click', () => {{ nextCity(); }}, {{ once: false, capture: true }}); // 增加全域點擊備援
 </script>
 """
 
