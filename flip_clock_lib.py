@@ -3,38 +3,30 @@ import streamlit.components.v1 as components
 
 def st_flip_clock():
     """
-    基於原始大寫中文翻板邏輯優化的全球城市翻板鐘模組。
-    解決了手機版時區失效與面板文字偏離問題。
+    採用原始大寫中文翻板結構，解決殘影問題與時區失效。
     """
     flip_html = """
     <style>
-        body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
+        body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .container { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; }
 
-        /* 城市翻板面板 */
         .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; }
-        .city-card { 
-            position: relative; width: 44vw; max-width: 170px; height: 75px; 
-            font-family: "Microsoft JhengHei", sans-serif; font-size: 24px; font-weight: 900; color: #fff; 
-        }
+        .city-card { position: relative; width: 44vw; max-width: 170px; height: 75px; font-family: sans-serif; font-size: 24px; font-weight: 900; color: #fff; text-align: center; }
 
-        /* 時間面板 (僅時、分) */
         .clock { display: flex; gap: 10px; justify-content: center; align-items: center; }
-        .flip-card { 
-            position: relative; width: 18vw; max-width: 85px; height: 120px; 
-            font-family: "Arial Black", sans-serif; font-size: 70px; font-weight: 900; color: #e0e0e0;
-        }
+        .flip-card { position: relative; width: 18vw; max-width: 85px; height: 120px; font-family: "Arial Black", sans-serif; font-size: 75px; font-weight: 900; color: #e0e0e0; text-align: center; }
 
-        /* 繼承您提供的原始切割邏輯 */
+        /* 核心：採用您原始的 line-height 切割法，杜絕殘影 */
         .top, .bottom, .leaf-front, .leaf-back {
             position: absolute; left: 0; width: 100%; height: 50%;
-            overflow: hidden; background: #222; border: 1px solid #111; text-align: center; box-sizing: border-box;
+            overflow: hidden; background: #222; border: 1px solid #111; box-sizing: border-box;
         }
         
-        /* 修正文字切割點：城市卡片與時間卡片高度不同，需分開設定 line-height */
+        /* 城市板切割 */
         .city-card .top, .city-card .leaf-front { top: 0; border-radius: 6px 6px 0 0; line-height: 75px; }
         .city-card .bottom, .city-card .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; line-height: 0px; }
-        
+
+        /* 時間板切割 */
         .flip-card .top, .flip-card .leaf-front { top: 0; border-radius: 8px 8px 0 0; line-height: 120px; }
         .flip-card .bottom, .flip-card .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0px; }
 
@@ -49,11 +41,6 @@ def st_flip_clock():
         .hinge { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; transform: translateY(-50%); }
         .label { font-size: 18px; color: #555; align-self: flex-end; padding-bottom: 10px; font-weight: bold; }
         .unit-group { display: flex; gap: 4px; align-items: center; }
-        
-        @media (max-width: 600px) {
-            .flip-card { height: 100px; font-size: 55px; }
-            .flip-card .top, .flip-card .leaf-front { line-height: 100px; }
-        }
     </style>
 
     <div class="container">
@@ -92,15 +79,22 @@ def st_flip_clock():
             el.classList.add('flipping');
         }
 
-        function nextCity() { currentCityIdx = (currentCityIdx + 1) % cities.length; prevTimeStr = ""; tick(); }
+        function nextCity() { 
+            currentCityIdx = (currentCityIdx + 1) % cities.length; 
+            prevTimeStr = ""; // 關鍵：切換城市時清空快取，強迫時間更新
+            tick(); 
+        }
 
         function tick() {
             const city = cities[currentCityIdx];
-            // 手動計算 UTC 偏移，確保時區一定起作用
+            
+            // 強制計算 UTC 偏移，解決時區沒作用問題
             const d = new Date();
-            const localTime = new Date(d.getTime() + (d.getTimezoneOffset() * 60000) + (city.offset * 3600000));
-            const h = localTime.getHours().toString().padStart(2, '0');
-            const m = localTime.getMinutes().toString().padStart(2, '0');
+            const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+            const local = new Date(utc + (3600000 * city.offset));
+            
+            const h = local.getHours().toString().padStart(2, '0');
+            const m = local.getMinutes().toString().padStart(2, '0');
             const timeStr = h + m;
 
             if (document.getElementById('clock').innerHTML === "") {
