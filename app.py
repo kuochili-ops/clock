@@ -1,8 +1,7 @@
 import streamlit as st
 
-st.set_page_config(page_title="全球時區翻板鐘", layout="centered")
+st.set_page_config(page_title="翻板鐘修復版", layout="centered")
 
-# 城市資料
 CITIES_DATA = [
     {"zh": "臺    北", "en": "Taipei", "tz": "Asia/Taipei"},
     {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
@@ -11,68 +10,53 @@ CITIES_DATA = [
     {"zh": "紐    約", "en": "New York", "tz": "America/New_York"}
 ]
 
-flip_clock_module = f"""
+flip_logic = f"""
 <style>
     body {{ 
         background-color: #0e1117; 
-        display: flex; flex-direction: column;
-        justify-content: center; align-items: center; 
-        min-height: 100vh; margin: 0; padding: 0;
-        overflow: hidden;
+        margin: 0; padding: 20px 0;
+        display: flex; justify-content: center;
+        font-family: "Microsoft JhengHei", sans-serif;
     }}
-    
-    .main-container {{
-        display: flex; flex-direction: column; align-items: center; 
-        gap: 30px; width: 100%; max-width: 500px;
+    .container {{ display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%; }}
+
+    /* 翻板核心尺寸控制 */
+    :root {{
+        --city-h: 70px;
+        --time-h: 110px;
+        --time-w: 75px;
     }}
 
-    /* 通用翻板容器 */
     .flip-card {{
-        position: relative; background: #222;
-        border-radius: 8px;
-        perspective: 1000px;
+        position: relative; background: #222; border-radius: 6px;
+        perspective: 1000px; color: #eee; font-weight: 900;
     }}
 
-    /* 城市翻板 (上方兩塊) */
-    .city-row {{ display: flex; gap: 12px; width: 90vw; }}
-    .city-flip {{ flex: 1; height: 80px; }}
+    /* 城市區塊 */
+    .city-row {{ display: flex; gap: 10px; width: 90vw; max-width: 450px; }}
+    .city-card {{ flex: 1; height: var(--city-h); font-size: 1.1rem; }}
 
-    /* 時間翻板 (下方四塊) */
-    .clock-row {{ display: flex; gap: 8px; align-items: center; }}
-    .time-flip {{ width: 20vw; max-width: 85px; height: 28vw; max-height: 120px; }}
+    /* 時間區塊 */
+    .clock-row {{ display: flex; gap: 6px; align-items: center; }}
+    .time-card {{ width: 18vw; max-width: var(--time-w); height: 25vw; max-height: var(--time-h); font-size: 15vw; }}
+    @media (min-width: 500px) {{ .time-card {{ font-size: 70px; }} }}
 
-    /* 修復核心：上下半部結構 */
+    /* 上下半部精確對齊 */
     .top, .bottom, .leaf-front, .leaf-back {{
         position: absolute; left: 0; width: 100%; height: 50%;
-        overflow: hidden; background: #262626;
-        display: flex; justify-content: center; align-items: center;
-        box-sizing: border-box;
+        overflow: hidden; background: #222; text-align: center;
     }}
+    
+    /* 城市文字定位 */
+    .city-card .top, .city-card .leaf-front {{ line-height: var(--city-h); border-radius: 6px 6px 0 0; }}
+    .city-card .bottom, .city-card .leaf-back {{ line-height: 0; border-radius: 0 0 6px 6px; }}
 
-    .top, .leaf-front {{
-        top: 0; border-radius: 8px 8px 0 0;
-        align-items: flex-end; /* 文字對齊中線底部 */
+    /* 時間文字定位 */
+    .time-card .top, .time-card .leaf-front {{ line-height: 25vw; border-radius: 6px 6px 0 0; }}
+    .time-card .bottom, .time-card .leaf-back {{ line-height: 0; border-radius: 0 0 6px 6px; }}
+    @media (min-width: 500px) {{
+        .time-card .top, .time-card .leaf-front {{ line-height: var(--time-h); }}
     }}
-
-    .bottom, .leaf-back {{
-        bottom: 0; border-radius: 0 0 8px 8px;
-        align-items: flex-start; /* 文字對齊中線頂部 */
-    }}
-
-    /* 解決文字殘缺：透過 span 控制文字溢出 */
-    .flip-card span {{
-        display: block; line-height: 0; 
-        font-family: "Microsoft JhengHei", Arial, sans-serif;
-        font-weight: 900; color: #eee;
-    }}
-
-    .city-flip span {{ font-size: 1.2rem; }}
-    .time-flip span {{ font-size: 18vw; }}
-    @media (min-width: 600px) {{ .time-flip span {{ font-size: 80px; }} }}
-
-    /* 確保上下半部文字剛好切分 */
-    .top span, .leaf-front span {{ transform: translateY(0); padding-bottom: 0; }}
-    .bottom span, .leaf-back span {{ transform: translateY(0); padding-top: 0; }}
 
     /* 翻轉動畫 */
     .leaf {{
@@ -80,46 +64,44 @@ flip_clock_module = f"""
         z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
         transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }}
-    .leaf-back {{ transform: rotateX(-180deg); }}
+    .leaf-back {{ transform: rotateX(-180deg); background: #222; border-top: 1px solid #000; }}
     .flipping .leaf {{ transform: rotateX(-180deg); }}
     
     .hinge {{
-        position: absolute; top: 50%; left: 0; width: 100%; height: 2px;
-        background: rgba(0,0,0,0.6); z-index: 20; transform: translateY(-50%);
+        position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+        background: #000; z-index: 20; width: 100%;
     }}
 </style>
 
-<div class="main-container">
+<div class="container">
     <div class="city-row" onclick="nextCity()">
-        <div class="flip-card city-flip" id="city-zh-card"></div>
-        <div class="flip-card city-flip" id="city-en-card"></div>
+        <div class="flip-card city-card" id="czh"></div>
+        <div class="flip-card city-card" id="cen"></div>
     </div>
-
     <div class="clock-row">
-        <div class="flip-card time-flip" id="h0"></div>
-        <div class="flip-card time-flip" id="h1"></div>
-        <div style="color:#444; font-size: 2rem; font-weight:bold;">:</div>
-        <div class="flip-card time-flip" id="m0"></div>
-        <div class="flip-card time-flip" id="m1"></div>
+        <div class="flip-card time-card" id="h0"></div>
+        <div class="flip-card time-card" id="h1"></div>
+        <div style="color:#555; font-size: 2rem;">:</div>
+        <div class="flip-card time-card" id="m0"></div>
+        <div class="flip-card time-card" id="m1"></div>
     </div>
 </div>
 
 <script>
     const cities = {CITIES_DATA};
-    let currentCityIndex = 0;
-    let prevTime = ["", ""];
-    let prevCity = {{ zh: "", en: "" }};
+    let currentIdx = 0;
+    let pTime = ["", ""];
+    let pCity = {{zh:"", en:""}};
 
-    function updateCard(id, newVal, oldVal) {{
+    function update(id, nv, ov) {{
         const el = document.getElementById(id);
-        if (newVal === oldVal && el.innerHTML !== "") return;
-
+        if (nv === ov && el.innerHTML !== "") return;
         el.innerHTML = `
-            <div class="top"><span>${{newVal}}</span></div>
-            <div class="bottom"><span>${{oldVal || newVal}}</span></div>
+            <div class="top">${{nv}}</div>
+            <div class="bottom">${{ov || nv}}</div>
             <div class="leaf">
-                <div class="leaf-front"><span>${{oldVal || newVal}}</span></div>
-                <div class="leaf-back"><span>${{newVal}}</span></div>
+                <div class="leaf-front">${{ov || nv}}</div>
+                <div class="leaf-back">${{nv}}</div>
             </div>
             <div class="hinge"></div>
         `;
@@ -129,36 +111,37 @@ flip_clock_module = f"""
     }}
 
     function nextCity() {{
-        currentCityIndex = (currentCityIndex + 1) % cities.length;
+        currentIdx = (currentIdx + 1) % cities.length;
         tick();
     }}
 
     function tick() {{
-        const city = cities[currentCityIndex];
+        const c = cities[currentIdx];
         const now = new Date();
-        const formatter = new Intl.DateTimeFormat('en-US', {{
-            timeZone: city.tz, hour12: false,
-            hour: '2-digit', minute: '2-digit'
+        const f = new Intl.DateTimeFormat('en-US', {{
+            timeZone: c.tz, hour12: false, hour: '2-digit', minute: '2-digit'
         }});
-        
-        const parts = formatter.formatToParts(now);
+        const parts = f.formatToParts(now);
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
 
-        updateCard('city-zh-card', city.zh, prevCity.zh);
-        updateCard('city-en-card', city.en, prevCity.en);
-        updateCard('h0', h[0], prevTime[0][0]);
-        updateCard('h1', h[1], prevTime[0][1]);
-        updateCard('m0', m[0], prevTime[1][0]);
-        updateCard('m1', m[1], prevTime[1][1]);
-        
-        prevTime = [h, m];
-        prevCity = {{ zh: city.zh, en: city.en }};
+        update('czh', c.zh, pCity.zh);
+        update('cen', c.en, pCity.en);
+        update('h0', h[0], pTime[0][0]);
+        updateCard('h1', h[1], pTime[0][1]); // 修正為 update
+        update('h1', h[1], pTime[0][1]);
+        update('m0', m[0], pTime[1][0]);
+        update('m1', m[1], pTime[1][1]);
+
+        pTime = [h, m];
+        pCity = {{zh: c.zh, en: c.en}};
     }}
+    // 修正上面小手誤，統一使用 update 函式
+    function updateCard(id, nv, ov) {{ update(id, nv, ov); }}
 
     setInterval(tick, 1000);
     tick();
 </script>
 """
 
-st.components.v1.html(flip_clock_module, height=500)
+st.components.v1.html(flip_logic, height=400)
