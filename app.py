@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(page_title="全球城市翻板鐘", layout="centered")
 
-flip_clock_final = """
+flip_clock_no_seconds = """
 <style>
     body { 
         background-color: #0e1117; 
@@ -11,17 +11,19 @@ flip_clock_final = """
         font-family: 'Courier New', Courier, monospace;
     }
     
-    .container { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; }
+    .container { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 100%; }
 
-    .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; }
+    /* 城市翻板 */
+    .city-row { display: flex; gap: 12px; width: 100%; justify-content: center; cursor: pointer; }
     .city-card {
-        position: relative; width: 44vw; max-width: 170px; height: 70px;
+        position: relative; width: 44vw; max-width: 180px; height: 80px;
         perspective: 1000px; color: #fff;
     }
 
-    .clock { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
+    /* 時間翻板 (僅時、分) */
+    .clock { display: flex; gap: 15px; justify-content: center; align-items: center; }
     .flip-card {
-        position: relative; width: 13vw; max-width: 60px; height: 20vw; max-height: 90px;
+        position: relative; width: 18vw; max-width: 80px; height: 26vw; max-height: 120px;
         font-weight: 900; color: #f0f0f0; perspective: 1000px;
     }
 
@@ -32,8 +34,8 @@ flip_clock_final = """
         box-sizing: border-box; border: 1px solid #000;
     }
 
-    .top, .leaf-front { top: 0; border-radius: 6px 6px 0 0; align-items: flex-end; }
-    .bottom, .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; align-items: flex-start; }
+    .top, .leaf-front { top: 0; border-radius: 8px 8px 0 0; align-items: flex-end; }
+    .bottom, .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; align-items: flex-start; }
 
     .text-box {
         height: 200%; 
@@ -44,12 +46,14 @@ flip_clock_final = """
     .top .text-box, .leaf-front .text-box { transform: translateY(50%); }
     .bottom .text-box, .leaf-back .text-box { transform: translateY(-50%); }
 
-    .city-card .text-box { font-size: 20px; font-family: "Microsoft JhengHei", sans-serif; }
-    .flip-card .text-box { font-size: 14vw; }
+    /* 字體大小優化 */
+    .city-card .text-box { font-size: 22px; font-family: "Microsoft JhengHei", sans-serif; }
+    .flip-card .text-box { font-size: 20vw; }
     
     @media (min-width: 600px) {
-        .flip-card .text-box { font-size: 75px; }
-        .city-card .text-box { font-size: 26px; }
+        .flip-card .text-box { font-size: 100px; }
+        .city-card .text-box { font-size: 30px; }
+        .flip-card { width: 100px; height: 140px; }
     }
 
     .leaf {
@@ -62,11 +66,11 @@ flip_clock_final = """
 
     .hinge {
         position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
-        background: rgba(0,0,0,0.6); z-index: 20; transform: translateY(-50%);
+        background: rgba(0,0,0,0.8); z-index: 20; transform: translateY(-50%);
     }
 
-    .label { font-size: 12px; color: #444; align-self: flex-end; padding-bottom: 5px; }
-    .unit-group { display: flex; gap: 2px; align-items: center; }
+    .label { font-size: 16px; color: #555; align-self: flex-end; padding-bottom: 10px; font-weight: bold; }
+    .unit-group { display: flex; gap: 5px; align-items: center; }
 </style>
 
 <div class="container">
@@ -95,7 +99,6 @@ flip_clock_final = """
     }
 
     function updateFlip(id, newVal, oldVal) {
-        // 如果新舊值一樣，且已經有內容，則不觸發動畫（除非強制更新）
         const el = document.getElementById(id);
         if (newVal === oldVal && el.innerHTML !== "") return;
         
@@ -114,43 +117,34 @@ flip_clock_final = """
 
     function nextCity() {
         currentCityIdx = (currentCityIdx + 1) % cities.length;
-        // 關鍵修正：切換城市時清空 prevTimeStr，強迫 tick 重新比對所有位數
-        prevTimeStr = ""; 
+        prevTimeStr = ""; // 強制刷新時間
         tick();
     }
 
     function tick() {
         const city = cities[currentCityIdx];
-        
-        // 取得該時區目前的正確時間字串
         const formatter = new Intl.DateTimeFormat('en-GB', {
             timeZone: city.zone,
             hour12: false,
             hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
+            minute: '2-digit'
         });
         const timeStr = formatter.format(new Date()).replace(/:/g, '');
 
-        // 初始化結構
         if (document.getElementById('clock').innerHTML === "") {
             document.getElementById('clock').innerHTML = `
-                <div class="unit-group"><div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">H</div></div>
-                <div class="unit-group"><div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">M</div></div>
-                <div class="unit-group"><div class="flip-card" id="d4"></div><div class="flip-card" id="d5"></div><div class="label">S</div></div>
+                <div class="unit-group"><div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div></div>
+                <div class="unit-group"><div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div></div>
             `;
         }
 
-        // 更新城市文字
         updateFlip("city-cn", city.cn, prevCity.cn || city.cn);
         updateFlip("city-en", city.en, prevCity.en || city.en);
         prevCity = { cn: city.cn, en: city.en };
 
-        // 更新數字位數
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 4; i++) {
             const nv = timeStr[i];
             const ov = prevTimeStr[i] || nv;
-            // 只有當數字真正改變，或是 prevTimeStr 被清空時才翻轉
             if (nv !== ov || prevTimeStr === "") {
                 updateFlip(`d${i}`, nv, ov);
             }
@@ -158,11 +152,12 @@ flip_clock_final = """
         prevTimeStr = timeStr;
     }
 
+    // 因為移除秒數，改為每 10 秒檢查一次即可，或者保留 1 秒檢查確保分鐘跳轉及時
     setInterval(tick, 1000);
     tick();
 </script>
 """
 
-st.title("🌏 全球翻板時鐘")
-st.markdown("點擊上方城市名稱切換時區。")
-st.components.v1.html(flip_clock_final, height=500)
+st.title("🌏 全球城市翻板鐘")
+st.markdown("已移除秒數，點擊城市翻板切換時區。")
+st.components.v1.html(flip_clock_no_seconds, height=500)
