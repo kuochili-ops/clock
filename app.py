@@ -5,10 +5,10 @@ import json
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# --- 1. 定義全城市資料庫 ---
+# --- 1. 定義全城市資料庫（含專屬照片連結） ---
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 
-# [VIP 14 城] - 點擊翻板時僅在此清單輪播
+# [VIP 14 城] - 點擊翻板循環播放
 MY_VIP_LIST = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "vip": True, "img": "https://images.unsplash.com/photo-1552234994-66ba234fd567?w=1200&q=80"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "vip": True, "img": "https://images.unsplash.com/photo-1596403079090-449e79075e89?w=1200&q=80"},
@@ -26,7 +26,7 @@ MY_VIP_LIST = [
     {"zh": "多倫多", "en": "Toronto", "tz": "America/Toronto", "q": "Toronto", "lat": 43.65, "lon": -79.38, "vip": True, "img": "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?w=1200&q=80"},
 ]
 
-# [背景 12 城] - 僅供地圖點選
+# [其他背景城市] - 提供地圖導航與經典照片
 GLOBAL_CITIES = [
     {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris", "lat": 48.85, "lon": 2.35, "vip": False, "img": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80"},
     {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "vip": False, "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80"},
@@ -39,13 +39,15 @@ GLOBAL_CITIES = [
     {"zh": "馬德里", "en": "Madrid", "tz": "Europe/Madrid", "q": "Madrid", "lat": 40.41, "lon": -3.70, "vip": False, "img": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1200&q=80"},
     {"zh": "孟 買", "en": "Mumbai", "tz": "Asia/Kolkata", "q": "Mumbai", "lat": 19.07, "lon": 72.87, "vip": False, "img": "https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?w=1200&q=80"},
     {"zh": "墨西哥城", "en": "Mexico City", "tz": "America/Mexico_City", "q": "Mexico City", "lat": 19.43, "lon": -99.13, "vip": False, "img": "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?w=1200&q=80"},
-    {"zh": "維也納", "en": "Vienna", "tz": "Europe/Vienna", "q": "Vienna", "lat": 48.20, "lon": 16.37, "vip": False, "img": "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=1200&q=80"}
+    {"zh": "維也納", "en": "Vienna", "tz": "Europe/Vienna", "q": "Vienna", "lat": 48.20, "lon": 16.37, "vip": False, "img": "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=1200&q=80"},
+    {"zh": "里斯本", "en": "Lisbon", "tz": "Europe/Lisbon", "q": "Lisbon", "lat": 38.72, "lon": -9.13, "vip": False, "img": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&q=80"},
+    {"zh": "開羅", "en": "Cairo", "tz": "Africa/Cairo", "q": "Cairo", "lat": 30.04, "lon": 31.23, "vip": False, "img": "https://images.unsplash.com/photo-1572252009286-268acec5ca0a?w=1200&q=80"},
+    {"zh": "香港", "en": "Hong Kong", "tz": "Asia/Hong_Kong", "q": "Hong Kong", "lat": 22.31, "lon": 114.16, "vip": False, "img": "https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=1200&q=80"}
 ]
 
-# 合併總表，但切換邏輯會分開處理
 ALL_CITIES = MY_VIP_LIST + GLOBAL_CITIES
 
-# --- 2. 地圖處理 ---
+# --- 2. 地圖對話框 ---
 @st.dialog("🌍 全球時空導航")
 def show_map_dialog():
     m = folium.Map(
@@ -70,7 +72,7 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. HTML / JavaScript 控制 ---
+# --- 3. UI 與 翻板核心邏輯 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
@@ -135,7 +137,7 @@ flip_clock_html = f"""
     const allCities = {json.dumps(ALL_CITIES)};
     const vipCities = {json.dumps(MY_VIP_LIST)};
     const apiKey = "{API_KEY}";
-    let curIdx = {initial_idx}; // 這是指向 allCities 的索引
+    let curIdx = {initial_idx};
     let pT = ["", ""]; let pC = {{zh: "", en: ""}}; let pW = {{status: "", temp: ""}};
 
     function updateFlip(id, newVal, oldVal) {{
@@ -188,20 +190,12 @@ flip_clock_html = f"""
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
-    // --- 關鍵修改：翻板點擊僅切換 VIP ---
     document.getElementById('click-zone').addEventListener('click', () => {{
         const currentCity = allCities[curIdx];
-        
-        // 找出目前城市在 VIP 清單中的位置
         let vipIdx = vipCities.findIndex(v => v.zh === currentCity.zh);
-        
-        // 如果目前不是 VIP，或者已經到最後一個 VIP，就跳回第一個 VIP
         vipIdx = (vipIdx + 1) % vipCities.length;
-        
-        // 將 allCities 的索引同步到選中的 VIP 城市
         const nextVip = vipCities[vipIdx];
         curIdx = allCities.findIndex(a => a.zh === nextVip.zh);
-        
         renderCity();
     }});
 
