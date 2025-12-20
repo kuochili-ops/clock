@@ -1,14 +1,14 @@
 import streamlit as st
 
-st.set_page_config(page_title="城市翻板鐘", layout="centered")
+st.set_page_config(page_title="城市翻板鐘修復版", layout="centered")
 
-# 定義城市資料
+# 城市資料模組
 CITIES_DATA = [
-    {"zh": "臺    北", "en": "Taipei", "tz": "Asia/Taipei"},
-    {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
-    {"zh": "倫    敦", "en": "London", "tz": "Europe/London"},
-    {"zh": "東    京", "en": "Tokyo", "tz": "Asia/Tokyo"},
-    {"zh": "紐    約", "en": "New York", "tz": "America/New_York"}
+    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
+    {"zh": "倫 敦", "en": "London", "tz": "Europe/London"},
+    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo"},
+    {"zh": "紐 約", "en": "New York", "tz": "America/New_York"}
 ]
 
 flip_clock_module = f"""
@@ -25,53 +25,56 @@ flip_clock_module = f"""
         display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;
     }}
 
-    /* 翻板通用樣式 */
     .flip-card {{
         position: relative; background: #222;
         font-weight: 900; color: #e0e0e0; text-align: center;
         perspective: 1000px;
     }}
 
-    /* 城市翻板尺寸 (並排) */
-    .city-row {{
-        display: flex; gap: 10px; width: 95vw; max-width: 500px;
-    }}
-    .city-flip {{
-        flex: 1; height: 80px; font-size: 1.2rem;
-    }}
+    /* 城市翻板優化 */
+    .city-row {{ display: flex; gap: 10px; width: 90vw; max-width: 500px; }}
+    .city-flip {{ flex: 1; height: 70px; font-size: 1.2rem; }}
 
-    /* 時鐘翻板尺寸 */
-    .clock-row {{
-        display: flex; gap: 10px;
-    }}
+    /* 時間翻板優化 */
+    .clock-row {{ display: flex; gap: 8px; align-items: center; }}
     .time-flip {{
-        width: 20vw; max-width: 90px; height: 28vw; max-height: 130px;
-        font-size: 18vw; max-font-size: 80px;
+        width: 20vw; max-width: 85px; height: 28vw; max-height: 120px;
+        font-size: 18vw; max-font-size: 75px;
     }}
 
-    /* 翻板內部結構 */
+    /* 核心修復：使用 Flexbox 確保文字上下半部完美對齊 */
     .top, .bottom, .leaf-front, .leaf-back {{
         position: absolute; left: 0; width: 100%; height: 50%;
-        overflow: hidden; background: #222; box-sizing: border-box;
-    }}
-    
-    .city-flip .top, .city-flip .leaf-front {{ line-height: 80px; border-radius: 8px 8px 0 0; }}
-    .city-flip .bottom, .city-flip .leaf-back {{ line-height: 0px; border-radius: 0 0 8px 8px; }}
-    
-    .time-flip .top, .time-flip .leaf-front {{ line-height: 28vw; border-radius: 10px 10px 0 0; }}
-    .time-flip .bottom, .time-flip .leaf-back {{ line-height: 0px; border-radius: 0 0 10px 10px; }}
-    
-    @media (min-width: 600px) {{
-        .time-flip .top, .time-flip .leaf-front {{ line-height: 130px; }}
+        overflow: hidden; background: #222;
+        display: flex; justify-content: center; /* 水平置中 */
     }}
 
-    .top {{ border-bottom: 1px solid #000; }}
+    .top, .leaf-front {{
+        top: 0; border-radius: 6px 6px 0 0; border-bottom: 0.5px solid #000;
+        align-items: flex-end; /* 對齊底端（翻板中心） */
+    }}
+
+    .bottom, .leaf-back {{
+        bottom: 0; border-radius: 0 0 6px 6px;
+        align-items: flex-start; /* 對齊頂端（翻板中心） */
+    }}
+
+    /* 調整文字在上下半部的位置，解決截圖中的偏移問題 */
+    .top, .leaf-front {{ padding-bottom: 0; }}
+    .bottom, .leaf-back {{ padding-top: 0; }}
+
+    /* 確保文字不會因為 overflow 被切掉過多 */
+    .top, .bottom, .leaf-front, .leaf-back {{
+        height: 50%;
+    }}
+
+    /* 翻轉動畫邏輯 */
     .leaf {{
         position: absolute; top: 0; left: 0; width: 100%; height: 50%;
         z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
         transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }}
-    .leaf-back {{ transform: rotateX(-180deg); border-top: 1px solid #000; }}
+    .leaf-back {{ transform: rotateX(-180deg); }}
     .flipping .leaf {{ transform: rotateX(-180deg); }}
     
     .hinge {{
@@ -89,7 +92,7 @@ flip_clock_module = f"""
     <div class="clock-row">
         <div class="flip-card time-flip" id="h0"></div>
         <div class="flip-card time-flip" id="h1"></div>
-        <div style="color:#666; font-size: 2rem; align-self:center; font-weight:bold;">:</div>
+        <div style="color:#666; font-size: 2rem; font-weight:bold;">:</div>
         <div class="flip-card time-flip" id="m0"></div>
         <div class="flip-card time-flip" id="m1"></div>
     </div>
@@ -105,15 +108,18 @@ flip_clock_module = f"""
         const el = document.getElementById(id);
         if (newVal === oldVal && el.innerHTML !== "") return;
 
-        el.innerHTML = `
-            <div class="top">${{newVal}}</div>
-            <div class="bottom">${{oldVal || newVal}}</div>
+        // 將內容拆分為上半部與下半部，確保對齊
+        const content = `
+            <div class="top"><span>${{newVal}}</span></div>
+            <div class="bottom"><span>${{oldVal || newVal}}</span></div>
             <div class="leaf">
-                <div class="leaf-front">${{oldVal || newVal}}</div>
-                <div class="leaf-back">${{newVal}}</div>
+                <div class="leaf-front"><span>${{oldVal || newVal}}</span></div>
+                <div class="leaf-back"><span>${{newVal}}</span></div>
             </div>
             <div class="hinge"></div>
         `;
+        
+        el.innerHTML = content;
         el.classList.remove('flipping');
         void el.offsetWidth;
         el.classList.add('flipping');
@@ -128,8 +134,7 @@ flip_clock_module = f"""
         const city = cities[currentCityIndex];
         const now = new Date();
         const formatter = new Intl.DateTimeFormat('en-US', {{
-            timeZone: city.tz,
-            hour12: false,
+            timeZone: city.tz, hour12: false,
             hour: '2-digit', minute: '2-digit'
         }});
         
@@ -137,11 +142,8 @@ flip_clock_module = f"""
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
 
-        // 更新城市翻板
         updateCard('city-zh-card', city.zh, prevCity.zh);
         updateCard('city-en-card', city.en, prevCity.en);
-        
-        // 更新時間翻板
         updateCard('h0', h[0], prevTime[0][0]);
         updateCard('h1', h[1], prevTime[0][1]);
         updateCard('m0', m[0], prevTime[1][0]);
@@ -156,7 +158,5 @@ flip_clock_module = f"""
 </script>
 """
 
-st.markdown("### 🌍 全球時光翻板")
-st.write("點擊**城市翻板**可切換城市與當地時間。")
-
-st.components.v1.html(flip_clock_module, height=400)
+st.markdown("### 🌍 全球時光翻板 (修復版)")
+st.components.v1.html(flip_clock_module, height=450)
