@@ -3,8 +3,7 @@
 
 #st.title("🌏 全球城市翻板鐘")
 #st_flip_clock()
-一樣的問題
-以下程式妳改過版面，翻板運作沒問題
+
 import streamlit as st
 
 st.set_page_config(page_title="大寫中文翻板鐘", layout="centered")
