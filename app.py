@@ -2,12 +2,14 @@ import streamlit as st
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# API Key 與 城市清單（更新洛杉磯影像連結）
+# API Key 與 城市清單（新增大阪與舊金山）
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "img": "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_2700,h_1800/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/wgnjys095pdwp1qjvh6k/%E5%8F%B0%E5%8C%97%EF%BD%9C%E7%B6%93%E5%85%B8%E4%B8%80%E6%97%A5%E9%81%8A-Klook%E5%AE%A2%E8%B7%AF.jpg"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "img": "https://images.chinatimes.com/newsphoto/2023-01-06/656/20230106004870.jpg"},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/HollywoodSign.jpg/1280px-HollywoodSign.jpg"},
+    {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "img": "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=1200&q=80"},
+    {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "img": "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1200&q=80"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/HollywoodSign.jpg/1200px-HollywoodSign.jpg"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
     {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=1000&q=80"},
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
@@ -27,13 +29,16 @@ flip_clock_html = f"""
     .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 98vw; max-width: 600px; }}
     .app-title {{ color: #444; font-size: 0.7rem; letter-spacing: 8px; font-weight: bold; margin-bottom: 2px; }}
     
+    /* 物理遮蔽核心元件 */
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
     .info-card {{ flex: 1; height: 85px; font-size: clamp(1.4rem, 5.8vw, 2.4rem); cursor: pointer; }}
 
+    /* 時間區塊 */
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; }}
     .time-card {{ width: 22vw; max-width: 125px; height: 42vw; max-height: 195px; font-size: clamp(5rem, 30vw, 160px); }}
     
+    /* 冒號亮點閃爍 */
     .colon {{ 
         color: #fff; font-size: 4rem; font-weight: bold; margin-bottom: 15px;
         text-shadow: 0 0 15px rgba(255,255,255,1);
@@ -41,6 +46,7 @@ flip_clock_html = f"""
     }}
     @keyframes blink-strong {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.1; }} 100% {{ opacity: 1; }} }}
 
+    /* 影像展示 */
     .city-photo-banner {{
         width: 100%; height: 30vh; max-height: 260px;
         border-radius: 12px; margin-top: 5px;
@@ -50,7 +56,7 @@ flip_clock_html = f"""
         box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
     }}
 
-    /* 物理遮蔽核心 */
+    /* 遮蔽動畫細節 */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
     .top {{ top: 0; border-bottom: 1px solid rgba(0,0,0,0.8); align-items: flex-end; }}
     .bottom {{ bottom: 0; align-items: flex-start; }}
