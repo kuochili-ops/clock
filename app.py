@@ -10,8 +10,8 @@ API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 
 # [VIP 14 城] - 點擊翻板循環播放
 MY_VIP_LIST = [
-    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "vip": True, "img": "https://images.unsplash.com/photo-1552234994-66ba234fd567?w=1200&q=80"},
-    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "vip": True, "img": "https://images.unsplash.com/photo-1596403079090-449e79075e89?w=1200&q=80"},
+    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "vip": True, "img": "https://travelss.net/wp-content/uploads/2024/11/115713250_m_normal_none-1.jpg"},
+    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "vip": True, "img": "https://enews.tw/photo/original/linecontent/5573/b90cda6ef5fd5a8c1cf5dfeab92d7417.jpeg"},
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "lat": 35.68, "lon": 139.69, "vip": True, "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1200&q=80"},
     {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "lat": 34.69, "lon": 135.50, "vip": True, "img": "https://images.unsplash.com/photo-1590254302920-561657099719?w=1200&q=80"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "lat": 43.06, "lon": 141.35, "vip": True, "img": "https://images.unsplash.com/photo-1604313271109-173663b6519f?w=1200&q=80"},
