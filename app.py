@@ -5,10 +5,10 @@ import json
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# --- 1. 定義全城市資料庫（包含 14 VIP + 50 全球城市與其專屬照片） ---
+# --- 1. 定義全城市資料庫 ---
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 
-# [VIP 14 城]
+# [VIP 14 城] - 點擊翻板時僅在此清單輪播
 MY_VIP_LIST = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "vip": True, "img": "https://images.unsplash.com/photo-1552234994-66ba234fd567?w=1200&q=80"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "vip": True, "img": "https://images.unsplash.com/photo-1596403079090-449e79075e89?w=1200&q=80"},
@@ -26,7 +26,7 @@ MY_VIP_LIST = [
     {"zh": "多倫多", "en": "Toronto", "tz": "America/Toronto", "q": "Toronto", "lat": 43.65, "lon": -79.38, "vip": True, "img": "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?w=1200&q=80"},
 ]
 
-# [補充 50 大城市中的主要城市照片連結]
+# [背景 12 城] - 僅供地圖點選
 GLOBAL_CITIES = [
     {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris", "lat": 48.85, "lon": 2.35, "vip": False, "img": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80"},
     {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "vip": False, "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80"},
@@ -42,7 +42,7 @@ GLOBAL_CITIES = [
     {"zh": "維也納", "en": "Vienna", "tz": "Europe/Vienna", "q": "Vienna", "lat": 48.20, "lon": 16.37, "vip": False, "img": "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=1200&q=80"}
 ]
 
-# 將所有城市合併
+# 合併總表，但切換邏輯會分開處理
 ALL_CITIES = MY_VIP_LIST + GLOBAL_CITIES
 
 # --- 2. 地圖處理 ---
@@ -70,7 +70,7 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 介面與 HTML ---
+# --- 3. HTML / JavaScript 控制 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
@@ -132,9 +132,10 @@ flip_clock_html = f"""
 </style>
 
 <script>
-    const cities = {json.dumps(ALL_CITIES)};
+    const allCities = {json.dumps(ALL_CITIES)};
+    const vipCities = {json.dumps(MY_VIP_LIST)};
     const apiKey = "{API_KEY}";
-    let curIdx = {initial_idx};
+    let curIdx = {initial_idx}; // 這是指向 allCities 的索引
     let pT = ["", ""]; let pC = {{zh: "", en: ""}}; let pW = {{status: "", temp: ""}};
 
     function updateFlip(id, newVal, oldVal) {{
@@ -161,7 +162,7 @@ flip_clock_html = f"""
     }}
 
     async function renderCity() {{
-        const c = cities[curIdx];
+        const c = allCities[curIdx];
         document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
         const now = new Date();
         const f = new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour12: false, hour: '2-digit' }});
@@ -173,7 +174,7 @@ flip_clock_html = f"""
     }}
 
     function tick() {{
-        const c = cities[curIdx];
+        const c = allCities[curIdx];
         const now = new Date();
         const f = new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour12: false, hour: '2-digit', minute: '2-digit' }});
         const parts = f.formatToParts(now);
@@ -187,8 +188,20 @@ flip_clock_html = f"""
         pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
 
+    // --- 關鍵修改：翻板點擊僅切換 VIP ---
     document.getElementById('click-zone').addEventListener('click', () => {{
-        curIdx = (curIdx + 1) % cities.length;
+        const currentCity = allCities[curIdx];
+        
+        // 找出目前城市在 VIP 清單中的位置
+        let vipIdx = vipCities.findIndex(v => v.zh === currentCity.zh);
+        
+        // 如果目前不是 VIP，或者已經到最後一個 VIP，就跳回第一個 VIP
+        vipIdx = (vipIdx + 1) % vipCities.length;
+        
+        // 將 allCities 的索引同步到選中的 VIP 城市
+        const nextVip = vipCities[vipIdx];
+        curIdx = allCities.findIndex(a => a.zh === nextVip.zh);
+        
         renderCity();
     }});
 
