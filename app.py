@@ -1,56 +1,68 @@
 import streamlit as st
+import requests
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# 擴充城市資料：加入模擬天氣數據
+# 城市資料與 OpenWeather 搜尋關鍵字
+API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
-    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "weather": "晴時多雲", "temp": "19~22°C"},
-    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "weather": "陣雨", "temp": "8~12°C"},
-    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "weather": "陰天", "temp": "5~9°C"},
-    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "weather": "多雲", "temp": "2~7°C"},
-    {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "weather": "晴朗", "temp": "6~11°C"},
-    {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "weather": "晴朗", "temp": "15~24°C"},
-    {"zh": "雪 黎", "en": "Sydney", "tz": "Australia/Sydney", "weather": "雷雨", "temp": "20~26°C"}
+    {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei"},
+    {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung"},
+    {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo"},
+    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London"},
+    {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York"},
+    {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles"},
+    {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris"}
 ]
+
+# 天氣中文化對照表
+WEATHER_DESC = {
+    "clear sky": "天 氣 晴", "few clouds": "多 雲 晴", "scattered clouds": "多 雲",
+    "broken clouds": "多 雲 陰", "overcast clouds": "陰 天", "light rain": "微 雨",
+    "moderate rain": "有 雨", "heavy intensity rain": "大 雨", "thunderstorm": "雷 雨",
+    "snow": "下 雪", "mist": "薄 霧"
+}
 
 flip_clock_html = f"""
 <style>
     body {{ 
         background-color: #0e1117; margin: 0; 
-        display: flex; justify-content: center; align-items: flex-start; /* 改為從頂部開始 */
-        min-height: 100vh; font-family: "Microsoft JhengHei", sans-serif;
-        padding-top: 5vh; /* 畫面上移 */
+        display: flex; justify-content: center; align-items: flex-start; 
+        min-height: 100vh; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+        padding-top: 3vh;
     }}
     
-    .app-container {{ 
-        display: flex; flex-direction: column; align-items: center; 
-        gap: 20px; width: 95vw; max-width: 550px; 
+    .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 15px; width: 98vw; max-width: 600px; }}
+    .app-title {{ color: #444; font-size: 0.8rem; letter-spacing: 6px; font-weight: bold; margin-bottom: 5px; }}
+    
+    .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
+    
+    /* 統一分散對齊佈局 */
+    .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 10px; }}
+    
+    /* 城市與天氣板：字體盡量放大 */
+    .info-card {{ 
+        flex: 1; height: 95px; 
+        font-size: clamp(1.5rem, 6vw, 2.4rem); /* 字體極大化 */
+        cursor: pointer; 
     }}
 
-    .app-title {{ color: #444; font-size: 0.9rem; letter-spacing: 5px; font-weight: bold; margin-bottom: 10px; }}
-    
-    .flip-card {{ position: relative; background: #1a1a1a; border-radius: 8px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
-    
-    /* 城市與天氣翻板：分散對齊與統一高度 */
-    .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 12px; }}
-    .info-card {{ flex: 1; height: 90px; font-size: clamp(1.2rem, 5vw, 1.8rem); cursor: pointer; }}
-
-    /* 時間翻板：極致加高 */
-    .time-row {{ display: flex; gap: 6px; align-items: center; justify-content: center; width: 100%; }}
+    /* 時間板：加高且極大字 */
+    .time-row {{ display: flex; gap: 5px; align-items: center; justify-content: center; width: 100%; }}
     .time-card {{ 
-        width: 22vw; max-width: 110px; 
-        height: 40vw; max-height: 190px; 
-        font-size: clamp(4.5rem, 26vw, 155px); 
+        width: 22vw; max-width: 130px; 
+        height: 42vw; max-height: 200px; 
+        font-size: clamp(5rem, 30vw, 170px); 
     }}
-    .colon {{ color: #333; font-size: 3.5rem; font-weight: bold; margin-bottom: 15px; }}
+    .colon {{ color: #333; font-size: 4rem; font-weight: bold; margin-bottom: 10px; }}
 
     /* --- 物理遮蔽核心 --- */
     .half {{
         position: absolute; left: 0; width: 100%; height: 50%;
         overflow: hidden; background: #1a1a1a; display: flex; justify-content: center;
     }}
-    .top {{ top: 0; border-radius: 8px 8px 0 0; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.6); }}
-    .bottom {{ bottom: 0; border-radius: 0 0 8px 8px; align-items: flex-start; }}
+    .top {{ top: 0; border-radius: 6px 6px 0 0; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.7); }}
+    .bottom {{ bottom: 0; border-radius: 0 0 6px 6px; align-items: flex-start; }}
 
     .text-box {{
         position: absolute; width: 100%; height: 200%;
@@ -88,17 +100,19 @@ flip_clock_html = f"""
     </div>
 
     <div class="row-flex">
-        <div class="flip-card info-card" id="w_status" style="background: #151515; font-size: 1.4rem; color: #aaa;"></div>
-        <div class="flip-card info-card" id="w_temp" style="background: #151515; font-size: 1.4rem; color: #888;"></div>
+        <div class="flip-card info-card" id="w_status" style="background: #121212; color: #ddd;"></div>
+        <div class="flip-card info-card" id="w_temp" style="background: #121212; color: #ccc;"></div>
     </div>
 </div>
 
 <script>
     const cities = {CITIES};
+    const apiKey = "{API_KEY}";
+    const weatherMap = {WEATHER_DESC};
     let curIdx = 0;
     let pT = ["", ""];
     let pC = {{zh: "", en: ""}};
-    let pW = {{status: "", temp: ""}};
+    let pW = {{status: "加載中", temp: "--~--°C"}};
 
     function updateFlip(id, newVal, oldVal) {{
         const el = document.getElementById(id);
@@ -117,7 +131,26 @@ flip_clock_html = f"""
         el.classList.add('flipping');
     }}
 
-    function nextCity() {{ curIdx = (curIdx + 1) % cities.length; tick(); }}
+    async function fetchWeather(cityQ) {{
+        try {{
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${{cityQ}}&appid=${{apiKey}}&units=metric&lang=zh_tw`);
+            const data = await res.json();
+            const desc = weatherMap[data.weather[0].description] || data.weather[0].description;
+            const temp = Math.round(data.main.temp_min) + "~" + Math.round(data.main.temp_max) + "°C";
+            return {{ status: desc, temp: temp }};
+        }} catch (e) {{
+            return {{ status: "連線失敗", temp: "誤差中" }};
+        }}
+    }}
+
+    async function nextCity() {{
+        curIdx = (curIdx + 1) % cities.length;
+        const newWeather = await fetchWeather(cities[curIdx].q);
+        updateFlip('w_status', newWeather.status, pW.status);
+        updateFlip('w_temp', newWeather.temp, pW.temp);
+        pW = newWeather;
+        tick();
+    }}
 
     function tick() {{
         const c = cities[curIdx];
@@ -129,28 +162,26 @@ flip_clock_html = f"""
         const h = parts.find(p => p.type === 'hour').value;
         const m = parts.find(p => p.type === 'minute').value;
 
-        // 更新城市雙板
         updateFlip('czh', c.zh, pC.zh);
         updateFlip('cen', c.en, pC.en);
-        
-        // 更新時間
         updateFlip('h0', h[0], pT[0] ? pT[0][0] : "");
         updateFlip('h1', h[1], pT[0] ? pT[0][1] : "");
         updateFlip('m0', m[0], pT[1] ? pT[1][0] : "");
         updateFlip('m1', m[1], pT[1] ? pT[1][1] : "");
 
-        // 更新天氣雙板
-        updateFlip('w_status', c.weather, pW.status);
-        updateFlip('w_temp', c.temp, pW.temp);
-
-        pT = [h, m]; 
-        pC = {{zh: c.zh, en: c.en}};
-        pW = {{status: c.weather, temp: c.temp}};
+        pT = [h, m]; pC = {{zh: c.zh, en: c.en}};
     }}
+
+    // 初始化天氣
+    fetchWeather(cities[0].q).then(w => {{
+        updateFlip('w_status', w.status, "");
+        updateFlip('w_temp', w.temp, "");
+        pW = w;
+    }});
 
     setInterval(tick, 1000);
     tick();
 </script>
 """
 
-st.components.v1.html(flip_clock_html, height=750)
+st.components.v1.html(flip_clock_html, height=800)
