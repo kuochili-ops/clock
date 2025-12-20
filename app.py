@@ -15,7 +15,7 @@ MY_VIP_LIST = [
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "lat": 35.68, "lon": 139.69, "vip": True, "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1200&q=80"},
     {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "lat": 34.69, "lon": 135.50, "vip": True, "img": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnTJlEIfSmA6kP3ND4eh3rkhPLNgrBrYGOkj_k5EdsK-oUZACAsqDKUio3&s=10"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "lat": 43.06, "lon": 141.35, "vip": True, "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
-    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "lat": 31.23, "lon": 121.47, "vip": True, "img": "https://bpic.wotucdn.com//27/94/12/27941288-4e4d6e01c76062c1ac405b5b7da1183d.jpg"},
+    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "lat": 31.23, "lon": 121.47, "vip": True, "img": "https://imgb10.photophoto.cn/20160612/shanghaiwaitanjiejing-24089814_3.jpg"},
     {"zh": "羅 馬", "en": "Rome", "tz": "Europe/Rome", "q": "Rome", "lat": 41.90, "lon": 12.49, "vip": True, "img": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80"},
     {"zh": "阿姆斯特丹", "en": "Amsterdam", "tz": "Europe/Amsterdam", "q": "Amsterdam", "lat": 52.36, "lon": 4.89, "vip": True, "img": "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?w=1200&q=80"},
     {"zh": "法蘭克福", "en": "Frankfurt", "tz": "Europe/Berlin", "q": "Frankfurt", "lat": 50.11, "lon": 8.68, "vip": True, "img": "https://images.unsplash.com/photo-1565053164104-d4b998188188?w=1200&q=80"},
