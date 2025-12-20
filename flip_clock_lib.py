@@ -3,45 +3,43 @@ import streamlit.components.v1 as components
 
 def st_flip_clock():
     """
-    基於「大寫中文版」穩定佈局重構的城市翻板鐘。
-    1. 使用 vw 鎖定 line-height 解決殘影與位移。
-    2. 使用 UTC 偏移量強制修正手機端時區失效問題。
+    修正版：確保翻板正常顯示，縮小縫隙並強制時區同步。
     """
     flip_html = """
     <style>
-        body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
+        body { background-color: #0e1117; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; overflow: hidden; }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; }
 
-        /* 城市板尺寸 (參照大寫版比例) */
-        .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; margin-bottom: 20px; }
+        /* 城市板 */
+        .city-row { display: flex; gap: 10px; width: 100%; justify-content: center; cursor: pointer; }
         .city-card { 
-            position: relative; width: 44vw; max-width: 180px; height: 20vw; max-height: 80px;
+            position: relative; width: 44vw; max-width: 170px; height: 18vw; max-height: 70px;
             font-family: "Microsoft JhengHei", sans-serif; font-size: 6vw; font-weight: 900; color: #fff; text-align: center;
         }
-        @media (min-width: 600px) { .city-card { font-size: 28px; } }
 
-        /* 時間板尺寸 (完全同步您提供的大寫版) */
-        .clock { display: flex; gap: 10px; perspective: 1500px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; }
+        /* 時間板 */
+        .clock { display: flex; gap: 8px; perspective: 1500px; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; }
         .flip-card {
             position: relative; width: 18vw; max-width: 80px; height: 25vw; max-height: 110px;
-            font-family: "Arial Black", sans-serif; font-size: 14vw; font-weight: 900; color: #e0e0e0; text-align: center;
+            font-family: "Arial Black", sans-serif; font-size: 14.5vw; font-weight: 900; color: #e0e0e0; text-align: center;
         }
-        @media (min-width: 600px) { .flip-card { width: 100px; height: 140px; font-size: 70px; } }
+        @media (min-width: 600px) { 
+            .city-card { font-size: 26px; } 
+            .flip-card { width: 100px; height: 140px; font-size: 70px; } 
+        }
 
-        /* 靜態底板與切割邏輯 (修正殘影的核心) */
+        /* 切割邏輯：修正 line-height 對齊板子高度 */
         .top, .bottom, .leaf-front, .leaf-back {
             position: absolute; left: 0; width: 100%; height: 50%;
-            overflow: hidden; background: #222; border: 1px solid #111; box-sizing: border-box;
+            overflow: hidden; background: #222; border: 0.5px solid #111; box-sizing: border-box;
         }
         
-        /* 城市板切割 */
-        .city-card .top, .city-card .leaf-front { top: 0; border-radius: 6px 6px 0 0; line-height: 20vw; border-bottom: 1px solid #000; }
-        .city-card .bottom, .city-card .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; line-height: 0px; }
-        @media (min-width: 600px) { .city-card .top, .city-card .leaf-front { line-height: 80px; } }
+        .city-card .top, .city-card .leaf-front { top: 0; border-radius: 6px 6px 0 0; line-height: 18vw; border-bottom: 1px solid #000; }
+        .city-card .bottom, .city-card .leaf-back { bottom: 0; border-radius: 0 0 6px 6px; line-height: 0; }
+        @media (min-width: 600px) { .city-card .top, .city-card .leaf-front { line-height: 70px; } }
 
-        /* 時間板切割 (同步大寫版 vw 單位) */
         .flip-card .top, .flip-card .leaf-front { top: 0; border-radius: 8px 8px 0 0; line-height: 25vw; border-bottom: 1px solid #000; }
-        .flip-card .bottom, .flip-card .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0px; }
+        .flip-card .bottom, .flip-card .leaf-back { bottom: 0; border-radius: 0 0 8px 8px; line-height: 0; }
         @media (min-width: 600px) { .flip-card .top, .flip-card .leaf-front { line-height: 140px; } }
 
         .leaf {
@@ -52,9 +50,10 @@ def st_flip_clock():
         .leaf-back { transform: rotateX(-180deg); }
         .flipping .leaf { transform: rotateX(-180deg); }
 
-        .hinge { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; transform: translateY(-50%); }
-        .label { font-size: 18px; color: #888; align-self: flex-end; padding-bottom: 5px; font-weight: bold; }
-        .unit-group { display: flex; gap: 5px; align-items: center; }
+        /* 縮小縫隙 */
+        .hinge { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(0,0,0,0.9); z-index: 20; transform: translateY(-50%); }
+        .label { font-size: 16px; color: #555; align-self: flex-end; padding-bottom: 5px; font-weight: bold; }
+        .unit-group { display: flex; gap: 4px; align-items: center; }
     </style>
 
     <div class="container">
@@ -62,7 +61,10 @@ def st_flip_clock():
             <div class="city-card" id="city-cn"></div>
             <div class="city-card" id="city-en"></div>
         </div>
-        <div class="clock" id="clock"></div>
+        <div class="clock" id="main_clock">
+            <div class="unit-group"><div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div></div>
+            <div class="unit-group"><div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div></div>
+        </div>
     </div>
 
     <script>
@@ -78,6 +80,7 @@ def st_flip_clock():
 
         function updateFlip(id, newVal, oldVal) {
             const el = document.getElementById(id);
+            if (!el) return;
             if (newVal === oldVal && el.innerHTML !== "") return;
             el.innerHTML = `
                 <div class="top">${newVal}</div>
@@ -101,7 +104,7 @@ def st_flip_clock():
 
         function tick() {
             const city = cities[currentCityIdx];
-            // 解決時區失效：改用 UTC 絕對時間計算
+            // 強制時區修正：不依賴設備本地時區設定
             const d = new Date();
             const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
             const local = new Date(utc + (3600000 * city.offset));
@@ -109,24 +112,22 @@ def st_flip_clock():
             const m = local.getMinutes().toString().padStart(2, '0');
             const timeStr = h + m;
 
-            if (document.getElementById('clock').innerHTML === "") {
-                document.getElementById('clock').innerHTML = `
-                    <div class="unit-group"><div class="flip-card" id="d0"></div><div class="flip-card" id="d1"></div><div class="label">時</div></div>
-                    <div class="unit-group"><div class="flip-card" id="d2"></div><div class="flip-card" id="d3"></div><div class="label">分</div></div>
-                `;
-            }
-
+            // 更新城市板
             updateFlip("city-cn", city.cn, prevCity.cn || city.cn);
             updateFlip("city-en", city.en, prevCity.en || city.en);
             prevCity = { cn: city.cn, en: city.en };
 
+            // 更新時間板
             for (let i = 0; i < 4; i++) {
-                const nv = timeStr[i]; const ov = prevTimeStr[i] || nv;
+                const nv = timeStr[i]; 
+                const ov = prevTimeStr[i] || nv;
                 if (nv !== ov || prevTimeStr === "") updateFlip(`d${i}`, nv, ov);
             }
             prevTimeStr = timeStr;
         }
-        setInterval(tick, 1000); tick();
+
+        setInterval(tick, 1000);
+        tick();
     </script>
     """
     return components.html(flip_html, height=450)
