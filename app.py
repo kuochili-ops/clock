@@ -1,46 +1,55 @@
 import streamlit as st
 
-st.set_page_config(page_title="全球翻板鐘-物理遮蔽版", layout="centered")
+st.set_page_config(page_title="全球翻板鐘-優化版", layout="centered")
 
-# 城市資料定義
+# 城市資料
 CITIES = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei"},
-    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
+    {"zh": "洛 杉 磯", "en": "Los Angeles", "tz": "America/Los_Angeles"},
     {"zh": "倫 敦", "en": "London", "tz": "Europe/London"},
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo"}
 ]
 
-# 物理遮蔽翻板模組邏輯
-flip_module_html = f"""
+flip_clock_html = f"""
 <style>
-    body {{ background-color: #0e1117; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; font-family: sans-serif; color: #eee; }}
-    .main-container {{ display: flex; flex-direction: column; align-items: center; gap: 30px; padding: 20px; width: 100%; box-sizing: border-box; }}
+    body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: "Microsoft JhengHei", sans-serif; }}
+    .main-container {{ display: flex; flex-direction: column; align-items: center; gap: 35px; width: 95vw; max-width: 500px; }}
     
-    /* 基礎翻板樣式 */
-    .flip-card {{ position: relative; background: #222; border-radius: 6px; font-weight: 900; perspective: 1000px; }}
-    .city-row {{ display: flex; gap: 10px; width: 100%; max-width: 450px; }}
-    .city-card {{ flex: 1; height: 75px; font-size: 1.2rem; cursor: pointer; }}
-    .time-row {{ display: flex; gap: 8px; align-items: center; }}
-    .time-card {{ width: 20vw; max-width: 85px; height: 28vw; max-height: 120px; font-size: 18vw; }}
-    @media (min-width: 500px) {{ .time-card {{ font-size: 80px; }} }}
+    /* 翻板基礎設定 */
+    .flip-card {{ position: relative; background: #222; border-radius: 8px; font-weight: 900; perspective: 1000px; color: #fff; }}
+    
+    /* 城市翻板：分散對齊優化 */
+    .city-row {{ 
+        display: flex; 
+        justify-content: space-between; /* 分散對齊 */
+        width: 100%; 
+        gap: 15px;
+    }}
+    .city-card {{ flex: 1; height: 85px; font-size: 1.6rem; cursor: pointer; }} /* 字體放大 */
 
-    /* 物理遮蔽核心：強制切分上下半部 */
+    /* 時間翻板佈局 */
+    .time-row {{ display: flex; gap: 8px; align-items: center; }}
+    .time-card {{ width: 20vw; max-width: 90px; height: 28vw; max-height: 130px; font-size: 20vw; }}
+    @media (min-width: 500px) {{ .time-card {{ font-size: 85px; }} }}
+
+    /* --- 物理遮蔽模組核心 --- */
     .half {{
         position: absolute; left: 0; width: 100%; height: 50%;
         overflow: hidden; background: #222; display: flex; justify-content: center;
     }}
-    .top {{ top: 0; border-radius: 6px 6px 0 0; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.4); }}
-    .bottom {{ bottom: 0; border-radius: 0 0 6px 6px; align-items: flex-start; }}
+    .top {{ top: 0; border-radius: 8px 8px 0 0; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.5); }}
+    .bottom {{ bottom: 0; border-radius: 0 0 8px 8px; align-items: flex-start; }}
 
-    /* 文字容器偏移：強制讓文字中心對準翻板中線 */
+    /* 物理位移補償：確保文字中心點鎖定在軸線上 */
     .text-box {{
         position: absolute; width: 100%; height: 200%;
         display: flex; align-items: center; justify-content: center;
+        text-align: center;
     }}
-    .top .text-box {{ bottom: -100%; }}  /* 上半部：將文字拉下一半 */
-    .bottom .text-box {{ top: -100%; }}   /* 下半部：將文字拉上一半 */
+    .top .text-box {{ bottom: -100%; }}
+    .bottom .text-box {{ top: -100%; }}
 
-    /* 翻轉葉片 */
+    /* 翻轉動畫層 */
     .leaf {{
         position: absolute; top: 0; left: 0; width: 100%; height: 50%;
         z-index: 10; transform-origin: bottom; transform-style: preserve-3d;
@@ -50,7 +59,7 @@ flip_module_html = f"""
     .leaf-back {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; transform: rotateX(-180deg); z-index: 1; }}
 
     .flipping .leaf {{ transform: rotateX(-180deg); }}
-    .hinge {{ position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; transform: translateY(-50%); }}
+    .hinge {{ position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; }}
 </style>
 
 <div class="main-container">
@@ -58,10 +67,11 @@ flip_module_html = f"""
         <div class="flip-card city-card" id="czh"></div>
         <div class="flip-card city-card" id="cen"></div>
     </div>
+
     <div class="time-row">
         <div class="flip-card time-card" id="h0"></div>
         <div class="flip-card time-card" id="h1"></div>
-        <div style="color:#555; font-size: 2.5rem; font-weight:bold;">:</div>
+        <div style="color:#444; font-size: 2.5rem; font-weight:bold; margin: 0 5px;">:</div>
         <div class="flip-card time-card" id="m0"></div>
         <div class="flip-card time-card" id="m1"></div>
     </div>
@@ -73,12 +83,10 @@ flip_module_html = f"""
     let pT = ["", ""];
     let pC = {{zh: "", en: ""}};
 
-    // 物理遮蔽更新函式
     function updateFlip(id, newVal, oldVal) {{
         const el = document.getElementById(id);
         if (newVal === oldVal && el.innerHTML !== "") return;
 
-        // 核心結構：四層半板確保物理遮蔽無殘留
         el.innerHTML = `
             <div class="half top"><div class="text-box">${{newVal}}</div></div>
             <div class="half bottom"><div class="text-box">${{oldVal || newVal}}</div></div>
@@ -121,4 +129,4 @@ flip_module_html = f"""
 </script>
 """
 
-st.components.v1.html(flip_module_html, height=500)
+st.components.v1.html(flip_clock_html, height=500)
