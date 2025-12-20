@@ -10,30 +10,31 @@ API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "img": "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_2700,h_1800/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/wgnjys095pdwp1qjvh6k/%E5%8F%B0%E5%8C%97%EF%BD%9C%E7%B6%93%E5%85%B8%E4%B8%80%E6%97%A5%E9%81%8A-Klook%E5%AE%A2%E8%B7%AF.jpg"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "img": "https://images.chinatimes.com/newsphoto/2023-01-06/656/20230106004870.jpg"},
-    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1000&q=80"},
+    {"zh": "洛杉磯", "en": "Los Angeles", "tz": "America/Los_Angeles", "q": "Los Angeles", "lat": 34.05, "lon": -118.24, "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/HollywoodSign.jpg/1280px-HollywoodSign.jpg"},
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "lat": 35.68, "lon": 139.69, "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1000&q=80"},
+    {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1000&q=80"},
     {"zh": "紐 約", "en": "New York", "tz": "America/New_York", "q": "New York", "lat": 40.71, "lon": -74.00, "img": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1000&q=80"}
 ]
 
-# --- 2. 處理地圖跳出 (修復標記消失問題) ---
+# --- 2. 處理地圖彈窗 (修復標記消失問題) ---
 @st.dialog("🌍 全球城市探索")
 def show_map_dialog():
-    # 使用 no_wrap=True 防止地圖無限左右循環導致標記消失
+    # 限制地圖不重複捲動 (worldCopyJump) 可以讓標記在循環時依然可見
     m = folium.Map(
         location=[20, 0], 
         zoom_start=1, 
         tiles="CartoDB dark_matter", 
         zoom_control=False,
-        no_wrap=True # 關鍵修復：限制地圖不重複捲動，標記就不會消失
+        no_wrap=True # 防止地圖重複導致標記在「分身版圖」消失
     )
     for c in CITIES:
         folium.CircleMarker(
             location=[c["lat"], c["lon"]], 
-            radius=10, color="#00d4ff", fill=True, 
-            fill_opacity=0.7, popup=c["zh"]
+            radius=12, color="#00d4ff", fill=True, 
+            fill_opacity=0.6, popup=c["zh"]
         ).add_to(m)
     
-    selected = st_folium(m, height=300, width=320, key="modal_map")
+    selected = st_folium(m, height=320, width=320, key="modal_map")
     if selected.get("last_object_clicked_popup"):
         name_zh = selected["last_object_clicked_popup"]
         idx = next((i for i, item in enumerate(CITIES) if item["zh"] == name_zh), None)
@@ -41,39 +42,40 @@ def show_map_dialog():
             st.session_state.target_idx = idx
             st.rerun()
 
-# --- 3. 隱藏控制按鈕 ---
+# --- 3. 隱藏式邏輯控制 ---
 st.markdown("<style>.stButton { display: none; }</style>", unsafe_allow_html=True)
 if st.button("TRIGGER_MAP"):
     show_map_dialog()
 
-# --- 4. 完美翻板 HTML 核心 (還原靈魂動畫) ---
+# --- 4. 物理翻板 HTML 核心 (還原靈魂 3D 動畫) ---
 initial_idx = st.session_state.get('target_idx', 0)
 
 flip_clock_html = f"""
 <style>
     body {{ background-color: #0e1117; margin: 0; display: flex; justify-content: center; }}
     .app-container {{ display: flex; flex-direction: column; align-items: center; gap: 8px; width: 92vw; max-width: 500px; padding-top: 10px; }}
-    .app-title {{ color: #444; font-size: 0.7rem; letter-spacing: 8px; font-weight: bold; margin-bottom: 2px; }}
+    .app-title {{ color: #444; font-size: 0.75rem; letter-spacing: 6px; font-weight: bold; margin-bottom: 2px; }}
     
     .flip-card {{ position: relative; background: #1a1a1a; border-radius: 6px; font-weight: 900; perspective: 1000px; color: #fff; overflow: hidden; }}
     .row-flex {{ display: flex; justify-content: space-between; width: 100%; gap: 8px; }}
-    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: 6vw; cursor: pointer; }}
+    .info-card {{ flex: 1; height: 18vw; max-height: 85px; font-size: clamp(1rem, 6vw, 2.2rem); cursor: pointer; }}
+    
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; cursor: pointer; }}
-    .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
-    .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
+    .time-card {{ width: 21vw; height: 40vw; max-height: 200px; font-size: 28vw; }}
+    .colon {{ color: #fff; font-size: 10vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
     @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.2; }} }}
     
     .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s; }}
     .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%); }}
 
-    /* 物理翻轉核心邏輯 */
+    /* 物理翻轉視覺核心 */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
-    .top {{ top: 0; border-bottom: 1.5px solid #000; align-items: flex-end; }} /* 物理切割線 */
+    .top {{ top: 0; border-bottom: 1.5px solid #000; align-items: flex-end; }} 
     .bottom {{ bottom: 0; align-items: flex-start; }}
     .text-box {{ position: absolute; width: 100%; height: 200%; display: flex; align-items: center; justify-content: center; }}
     .top .text-box {{ bottom: -100%; }} .bottom .text-box {{ top: -100%; }}
     
-    /* 3D 葉片翻轉動畫 */
+    /* 3D 翻轉葉片效果 */
     .leaf {{ position: absolute; top: 0; left: 0; width: 100%; height: 50%; z-index: 10; transform-origin: bottom; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
     .leaf-front, .leaf-back {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; }}
     .leaf-back {{ transform: rotateX(-180deg); }}
@@ -99,7 +101,7 @@ flip_clock_html = f"""
     </div>
     <div class="city-photo-banner" id="city-img">
         <div class="glass-vignette"></div>
-        <div style="position:absolute; bottom:0; left:0; width:40%; height:50%; cursor:pointer; z-index:100;" 
+        <div style="position:absolute; bottom:0; left:0; width:45%; height:60%; cursor:pointer; z-index:100;" 
              onclick="window.parent.document.querySelector('button[kind=secondary]').click()"></div>
     </div>
 </div>
@@ -142,7 +144,8 @@ flip_clock_html = f"""
         const c = cities[curIdx];
         document.getElementById('city-img').style.backgroundImage = `url('${{c.img}}')`;
         const now = new Date();
-        const hour = parseInt(new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour: '2-digit', hour12: false }}).format(now));
+        const f = new Intl.DateTimeFormat('en-US', {{ timeZone: c.tz, hour12: false, hour: '2-digit' }});
+        const hour = parseInt(f.format(now));
         const w = await fetchWeather(c.q, hour);
         updateFlip('w_status', w.status, pW.status);
         updateFlip('w_temp', w.temp, pW.temp);
