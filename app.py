@@ -5,10 +5,10 @@ import json
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
 
-# --- 1. 定義全城市資料庫（含專屬照片連結） ---
+# --- 1. 定義全城市資料庫 ---
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 
-# [VIP 14 城] - 點擊翻板循環播放
+# [VIP 14 城] - 點擊翻板本體時會在此循環切換
 MY_VIP_LIST = [
     {"zh": "臺 北", "en": "Taipei", "tz": "Asia/Taipei", "q": "Taipei", "lat": 25.03, "lon": 121.56, "vip": True, "img": "https://travelss.net/wp-content/uploads/2024/11/115713250_m_normal_none-1.jpg"},
     {"zh": "高 雄", "en": "Kaohsiung", "tz": "Asia/Taipei", "q": "Kaohsiung", "lat": 22.62, "lon": 120.30, "vip": True, "img": "https://enews.tw/photo/original/linecontent/5573/b90cda6ef5fd5a8c1cf5dfeab92d7417.jpeg"},
@@ -26,7 +26,7 @@ MY_VIP_LIST = [
     {"zh": "多倫多", "en": "Toronto", "tz": "America/Toronto", "q": "Toronto", "lat": 43.65, "lon": -79.38, "vip": True, "img": "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?w=1200&q=80"},
 ]
 
-# [其他背景城市] - 提供地圖導航與經典照片
+# [其他背景城市] - 提供地圖導航點選，配備經典照片
 GLOBAL_CITIES = [
     {"zh": "巴 黎", "en": "Paris", "tz": "Europe/Paris", "q": "Paris", "lat": 48.85, "lon": 2.35, "vip": False, "img": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80"},
     {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "lat": 51.50, "lon": -0.12, "vip": False, "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80"},
@@ -90,7 +90,7 @@ flip_clock_html = f"""
         <div class="time-row">
             <div class="flip-card time-card" id="h0"></div>
             <div class="flip-card time-card" id="h1"></div>
-            <div class="colon">:</div>
+            <div class="colon" id="breath-colon">:</div>
             <div class="flip-card time-card" id="m0"></div>
             <div class="flip-card time-card" id="m1"></div>
         </div>
@@ -116,7 +116,23 @@ flip_clock_html = f"""
     .weather-card {{ background: #121212 !important; color: #aaa !important; font-size: 5vw; }}
     .time-row {{ display: flex; gap: 4px; align-items: center; justify-content: center; width: 100%; margin-top: 5px; }}
     .time-card {{ width: 21vw; height: 35vw; font-size: 26vw; }}
-    .colon {{ color: #fff; font-size: 8vw; font-weight: bold; animation: blink 1s infinite steps(1); }}
+
+    /* --- 呼吸冒號樣式 --- */
+    .colon {{ 
+        color: #fff; 
+        font-size: 8vw; 
+        font-weight: bold; 
+        width: 4vw;
+        display: flex;
+        justify-content: center;
+        animation: breath 1s ease-in-out infinite; 
+    }}
+    @keyframes breath {{
+        0% {{ opacity: 0.2; text-shadow: 0 0 0px rgba(255,255,255,0); }}
+        50% {{ opacity: 1.0; text-shadow: 0 0 10px rgba(255,255,255,0.8); }}
+        100% {{ opacity: 0.2; text-shadow: 0 0 0px rgba(255,255,255,0); }}
+    }}
+
     .attribution {{ color: #333; font-size: 0.6rem; align-self: flex-end; margin-right: 5px; margin-top: -4px; }}
     .city-photo-banner {{ position: relative; width: 100%; height: 50vw; max-height: 280px; border-radius: 15px; margin-top: 5px; background-size: cover; background-position: center; transition: background-image 0.8s ease-in-out; }}
     .glass-vignette {{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%); }}
