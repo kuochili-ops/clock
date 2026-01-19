@@ -1,6 +1,20 @@
 import streamlit as st
+import base64
+import os
 
 st.set_page_config(page_title="𓃥白六世界時鐘", layout="centered")
+
+# --- 自動讀取並轉換本地圖片的模組 ---
+def load_local_image(file_name):
+    if os.path.exists(file_name):
+        with open(file_name, "rb") as f:
+            data = f.read()
+        # 轉換成 Base64 格式，讓 HTML 可以直接嵌入
+        return f"data:image/jpeg;base64,{base64.b64encode(data).decode()}"
+    return "" # 若檔案不存在則回傳空
+
+# 預先讀取上海圖片
+shanghai_img = load_local_image("IMG_2271.jpeg")
 
 API_KEY = "dcd113bba5675965ccf9e60a7e6d06e5"
 CITIES = [
@@ -10,7 +24,7 @@ CITIES = [
     {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "img": "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=1200&q=80"},
     {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "img": "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1200&q=80"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
-    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "IMG_2271.jpeg"},
+    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": shanghai_img}, # 這裡已替換為 Base64 數據
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1000&q=80"},
     {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1000&q=80"},
