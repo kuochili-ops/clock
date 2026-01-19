@@ -42,7 +42,6 @@ flip_clock_html = f"""
     }}
     @keyframes blink-strong {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.1; }} 100% {{ opacity: 1; }} }}
 
-    /* 焦點霧化影像橫幅 */
     .city-photo-banner {{
         position: relative; width: 100%; height: 32vh; max-height: 280px;
         border-radius: 15px; margin-top: 5px;
@@ -52,17 +51,14 @@ flip_clock_html = f"""
         overflow: hidden;
     }}
     
-    /* 四邊霧化遮罩核心 */
     .glass-vignette {{
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        backdrop-filter: blur(8px); /* 霧化強度 */
-        /* 徑向漸變遮罩：中央透明(100%清晰)，周邊不透明(觸發blur) */
+        backdrop-filter: blur(8px);
         -webkit-mask-image: radial-gradient(circle, transparent 40%, black 100%);
         mask-image: radial-gradient(circle, transparent 40%, black 100%);
         background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.5) 100%);
     }}
 
-    /* 物理遮蔽模組核心 */
     .half {{ position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #1a1a1a; display: flex; justify-content: center; }}
     .top {{ top: 0; border-bottom: 1px solid rgba(0,0,0,0.8); align-items: flex-end; }}
     .bottom {{ bottom: 0; align-items: flex-start; }}
