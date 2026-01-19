@@ -10,7 +10,7 @@ CITIES = [
     {"zh": "大 阪", "en": "Osaka", "tz": "Asia/Tokyo", "q": "Osaka", "img": "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=1200&q=80"},
     {"zh": "舊金山", "en": "San Francisco", "tz": "America/Los_Angeles", "q": "San Francisco", "img": "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=1200&q=80"},
     {"zh": "札 幌", "en": "Sapporo", "tz": "Asia/Tokyo", "q": "Sapporo", "img": "https://hokkaido-labo.com/wp-content/uploads/2014/09/140964647192343.jpg"},
-    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "https://img.pconline.com.cn/images/upload/upc/tx/photoblog/1407/31/c0/36887970_36887970_1406758172990_mthumb.jpg"},
+    {"zh": "上 海", "en": "Shanghai", "tz": "Asia/Shanghai", "q": "Shanghai", "img": "IMG_2271.jpeg"},
     {"zh": "哥本哈根", "en": "Copenhagen", "tz": "Europe/Copenhagen", "q": "Copenhagen", "img": "https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?w=1000&q=80"},
     {"zh": "東 京", "en": "Tokyo", "tz": "Asia/Tokyo", "q": "Tokyo", "img": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1000&q=80"},
     {"zh": "倫 敦", "en": "London", "tz": "Europe/London", "q": "London", "img": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1000&q=80"},
